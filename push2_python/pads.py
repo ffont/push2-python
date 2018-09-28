@@ -58,19 +58,21 @@ class Push2Pads(object):
                     animation = animation_matrix[i][j]
                 self.set_pad_color(i, j, color=color, animation=animation)
 
-    def set_pads_to_color(self, color='white', animation='static'):
+    def set_all_pads_to_color(self, color='white', animation='static'):
+        """Set all pads to the given color/animation.
+        """
         color_matrix = [[color for _ in range(0, 8)] for _ in range(0, 8)]
         animation_matrix = [[animation for _ in range(0, 8)] for _ in range(0, 8)]
         self.set_pads_color(color_matrix, animation_matrix)
     
-    def set_pads_to_white(self, animation='static'):
-        self.set_pads_to_color('white', animation=animation)
+    def set_all_pads_to_white(self, animation='static'):
+        self.set_all_pads_to_color('white', animation=animation)
 
-    def set_pads_to_red(self, animation='static'):
-        self.set_pads_to_color('red', animation=animation)
+    def set_all_pads_to_red(self, animation='static'):
+        self.set_all_pads_to_color('red', animation=animation)
 
-    def set_pads_to_green(self, animation='static'):
-        self.set_pads_to_color('green', animation=animation)
+    def set_all_pads_to_green(self, animation='static'):
+        self.set_all_pads_to_color('green', animation=animation)
 
-    def set_pads_to_blue(self, animation='static'):
-        self.set_pads_to_color('blue', animation=animation)
+    def set_all_pads_to_blue(self, animation='static'):
+        self.set_all_pads_to_color('blue', animation=animation)

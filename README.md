@@ -67,6 +67,6 @@ for j in range(0, 5):
 
 # Set pad colors
 for color in ['white', 'red', 'green', 'blue']:
-    push.pads.set_pads_to_color(color)
+    push.pads.set_all_pads_to_color(color)
     time.sleep(0.5)
 ```
