@@ -53,15 +53,15 @@ push = Push2()
 # Generate consecutive color frames
 for j in range(0, 5):
     frame = generate_3_color_frame()
-    push.display_frame(frame)
+    push.display.display_frame(frame)
     time.sleep(1)
 
 # Generate frame from loaded image (requires "pip install Pillow numpy")
 frame = generate_frame_from_img("test_img_960x160.png")
-push.display_frame(frame)
+push.display.display_frame(frame)
 
 # Repeat display last frame so the image stays on screen
 for j in range(0, 5):
-    push.display_last_frame()
+    push.display.display_last_frame()
     time.sleep(1)
 ```
