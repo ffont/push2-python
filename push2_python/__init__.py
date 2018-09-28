@@ -102,6 +102,7 @@ class Push2(object):
         self.display_usb_endpoint.write(
             DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
 
+        # TODO: the XOR operation below can probably be optimized to avoid iterating all buffer
         for i in range(0, len(frame_bytes), DISPLAY_BUFFER_SIZE):
             buffer_data = [byte ^ DISPLAY_XOR_PATTERN[count % len(DISPLAY_XOR_PATTERN)] for count,
                            byte in enumerate(frame_bytes[i: i + DISPLAY_BUFFER_SIZE])]
@@ -114,8 +115,8 @@ class Push2(object):
         That is Push2's screen size with 160 lines and 960 pixels per line. Each pixel color
         must be specified with a list of 3 RGB values in the range [0.0, 1.0].
         """
+        # TODO: the operations below could probably be optimized by using numpy arrays, this implementation is really slow
         assert len(frame) == DISPLAY_N_LINES, 'Wrong number of lines in frame ({0})'.format(len(frame))
-            
         frame_bytes = []
         for line in frame:
             assert len(line) == DISPLAY_LINE_PIXELS, 'Wrong number of pixels in line ({0})'.format(len(line))

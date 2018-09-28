@@ -6,6 +6,7 @@ These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://
 So far I only implemented some **utils to communicate with the display**. Interfacing with buttons, pads and encoders is all done via MIDI and therefore is relatively straightforward. I plan to include utils for this as well, but contributions are also welcome :)
 
 **NOTE 1**: I only testd the utils in Python 3, but it should work with 2 as well.
+
 **NOTE 2**: this package requires [pyusb](https://github.com/pyusb/pyusb) which is based in [libusb](https://libusb.info/). You'll need to manually install `libusb` for your operative system if `pip` does not do it for you.
 
 
