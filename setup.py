@@ -7,5 +7,5 @@ setup(name='push2-python',
       author='Frederic Font',
       author_email='frederic.font@gmail.com',
       license='MIT',
-      install_requires=['numpy', 'pyusb'],
+      install_requires=['numpy', 'pyusb', 'python-rtmidi', 'mido'],
       packages=find_packages())

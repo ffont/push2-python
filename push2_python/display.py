@@ -7,7 +7,7 @@ from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT
 
 class Push2Display(object):
     """Class to interface with Ableton's Push2 display.
-    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#display-interface
     """
     usb_endpoint = None
     last_frame_bytes = None
