@@ -1,11 +1,12 @@
 import usb.core
 import usb.util
+from .classes import AbstractPush2Section
 from .exceptions import Push2USBDeviceConfigurationError, Push2USBDeviceNotFound
 from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT, DISPLAY_FRAME_HEADER, \
     DISPLAY_BUFFER_SIZE, DISPLAY_XOR_PATTERN, DISPLAY_N_LINES, DISPLAY_LINE_PIXELS, DISPLAY_LINE_FILLER_BYTES
 
 
-class Push2Display(object):
+class Push2Display(AbstractPush2Section):
     """Class to interface with Ableton's Push2 display.
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#display-interface
     """

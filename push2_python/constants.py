@@ -5,7 +5,8 @@ USB_TRANSFER_TIMEOUT = 1000
 
 # MIDI
 PUSH2_MIDI_OUT_PORT_NAME = 'Ableton Push 2 Live Port'
-PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 User Port'  # TODO: might use Live port as well?
+PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'  
+# TODO: sort out what to really do with Live/User ports
 
 # Push 2 Display
 DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,

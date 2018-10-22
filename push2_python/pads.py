@@ -1,22 +1,13 @@
 import mido
-from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT
-from .exceptions import Push2MIDIeviceNotFound
+import weakref
+from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT
+from .classes import AbstractPush2Section
 
 
-class Push2Pads(object):
+class Push2Pads(AbstractPush2Section):
     """Class to interface with Ableton's Push2 pads.
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
-    """
-
-    midi_in_port = None
-    midi_out_port = None
-
-    def configure_midi_ports(self):
-        try:
-            self.midi_in_port = mido.open_input(PUSH2_MIDI_IN_PORT_NAME)
-            self.midi_out_port = mido.open_output(PUSH2_MIDI_OUT_PORT_NAME)
-        except OSError:
-            raise Push2MIDIeviceNotFound
+    """    
 
     def coords_to_pad_midi_number(self, i, j):
         """Transform (i, j) coordinates to the corresponding pad number
@@ -38,7 +29,7 @@ class Push2Pads(object):
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
         msg = mido.Message('note_on', note=pad, velocity=color, channel=1)
-        self.midi_out_port.send(msg)
+        self.push2.midi_out_port.send(msg)
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
@@ -76,3 +67,11 @@ class Push2Pads(object):
 
     def set_all_pads_to_blue(self, animation='static'):
         self.set_all_pads_to_color('blue', animation=animation)
+
+    def on_midi_message(self, message):
+        if message.type == 'note_on':
+            self.push2.trigger_on_view('on_pad_pressed', message)
+        elif message.type == 'note_off':
+            self.push2.trigger_on_view('on_pad_released', message)
+        
+        # TODO: add support for polyphonic AT messages
