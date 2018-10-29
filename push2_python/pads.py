@@ -26,7 +26,7 @@ class Push2Pads(AbstractPush2Section):
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
         TODO: test this function
         """
-        raise (92 - n) // 8, (92 - n) % 8
+        return (99 - n) // 8, 7 - (99 - n) % 8
 
     def set_pad_color(self, i, j, color='white', animation='static'):
         """Sets the color of the pad at the (i, j) coordinate.
@@ -76,15 +76,14 @@ class Push2Pads(AbstractPush2Section):
         self.set_all_pads_to_color('blue', animation=animation)
 
     def on_midi_message(self, message):
-        if message.type == 'note_on':
-            pad_n = message.note
-            pad_ij = self.pad_n_to_pad_ij(pad_n)
-            velocity = message.velocity
-            self.push2.trigger_on_view('on_pad_pressed', pad_n, pad_ij, velocity)
-        elif message.type == 'note_off':
-            pad_n = message.note
-            pad_ij = self.pad_n_to_pad_ij(pad_n)
-            velocity = message.velocity
-            self.push2.trigger_on_view('on_pad_released', pad_n, pad_ij, velocity)
+        if message.type in ['note_on', 'note_off']:
+            if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
+                pad_n = message.note
+                pad_ij = self.pad_n_to_pad_ij(pad_n)
+                velocity = message.velocity
+                if message.type == 'note_on':   
+                    self.push2.trigger_on_view('on_pad_pressed', pad_n, pad_ij, velocity)
+                elif message.type == 'note_off':
+                    self.push2.trigger_on_view('on_pad_released', pad_n, pad_ij, velocity)
         
         # TODO: add support for polyphonic AT messages

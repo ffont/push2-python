@@ -24,6 +24,8 @@ class Push2(object):
 
     def __init__(self):
 
+        self.views = []
+
         # Add debug view to active views
         self.add_view(Push2DebugView)
 
