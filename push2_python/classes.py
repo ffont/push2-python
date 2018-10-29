@@ -17,23 +17,26 @@ class AbstractPush2Section(object):
         return self.main_push2_object()  # Return de-refernced main Push2 object
 
 
-class Push2View(object):
+class AbstractPush2View(AbstractPush2Section):
     """TODO: document this class
+    Inherit from AbstractPush2Section so that it also has the self.push2 property.
     """
 
-    def on_pad_pressed(self, msg):
+    @property
+    def name(self):
+        return str(self)
+
+    def on_pad_pressed(self, pad_n, pad_ij, velocity):
         raise NotImplementedError
 
-    def on_pad_released(self, msg):
+    def on_pad_released(self, pad_n, pad_ij, velocity):
         raise NotImplementedError
 
 
-class Push2DebugView(Push2View):
+class Push2DebugView(AbstractPush2View):
 
-    @staticmethod
-    def on_pad_pressed(msg):
-        print('Pad pressed', msg)
+    def on_pad_pressed(self, pad_n, pad_ij, velocity):
+        print('Pad pressed', pad_n, pad_ij, velocity)
 
-    @staticmethod
-    def on_pad_released(msg):
-        print('Pad released', msg)
+    def on_pad_released(self, pad_n, pad_ij, velocity):
+        print('Pad released', pad_n, pad_ij, velocity)

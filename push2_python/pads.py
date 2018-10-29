@@ -9,7 +9,7 @@ class Push2Pads(AbstractPush2Section):
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
     """    
 
-    def coords_to_pad_midi_number(self, i, j):
+    def pad_ij_to_pad_n(self, i, j):
         """Transform (i, j) coordinates to the corresponding pad number
         according to the specification. (0, 0) corresponds to the top-left pad while
         (7, 7) corresponds to the bottom right pad.
@@ -21,11 +21,18 @@ class Push2Pads(AbstractPush2Section):
 
         return 92 - (clamp(i, 0, 7) * 8) + clamp(j, 0, 7)
 
+    def pad_n_to_pad_ij(self, n):
+        """Transform MIDI note number to pad (i, j) coordinates.
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
+        TODO: test this function
+        """
+        raise (92 - n) // 8, (92 - n) % 8
+
     def set_pad_color(self, i, j, color='white', animation='static'):
         """Sets the color of the pad at the (i, j) coordinate.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
-        pad = self.coords_to_pad_midi_number(i, j)
+        pad = self.pad_ij_to_pad_n(i, j)
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
         msg = mido.Message('note_on', note=pad, velocity=color, channel=1)
@@ -70,8 +77,14 @@ class Push2Pads(AbstractPush2Section):
 
     def on_midi_message(self, message):
         if message.type == 'note_on':
-            self.push2.trigger_on_view('on_pad_pressed', message)
+            pad_n = message.note
+            pad_ij = self.pad_n_to_pad_ij(pad_n)
+            velocity = message.velocity
+            self.push2.trigger_on_view('on_pad_pressed', pad_n, pad_ij, velocity)
         elif message.type == 'note_off':
-            self.push2.trigger_on_view('on_pad_released', message)
+            pad_n = message.note
+            pad_ij = self.pad_n_to_pad_ij(pad_n)
+            velocity = message.velocity
+            self.push2.trigger_on_view('on_pad_released', pad_n, pad_ij, velocity)
         
         # TODO: add support for polyphonic AT messages

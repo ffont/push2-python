@@ -20,12 +20,12 @@ class Push2(object):
     midi_out_port = None
     display = None
     pads = None
-    active_views = None
+    views = None
 
     def __init__(self):
 
         # Add debug view to active views
-        self.active_views = [Push2DebugView]
+        self.add_view(Push2DebugView)
 
         # Init Display
         self.display = Push2Display(self)
@@ -44,10 +44,19 @@ class Push2(object):
         except (Push2MIDIeviceNotFound) as e:
             logging.debug('Could not initialize Push 2 Pads: {0}'.format(e))
 
+    def add_view(self, view):
+        """Gets a view class and adds it to current views initializing it with current
+        Push2 object instance"""
+        if view.name not in [v.name for v in self.views]:
+            self.views.append(view(self))
+
+    def remove_view(self, view):
+        self.views = [v for v in self.views if v.name != view.name]
+
     def trigger_on_view(self, *args, **kwargs):
         method_name = args[0]
         new_args = args[1:]
-        for view in self.active_views:
+        for view in self.views:
             getattr(view, method_name)(*new_args, **kwargs)
 
     def configure_midi_ports(self):
