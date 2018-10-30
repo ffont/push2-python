@@ -32,6 +32,9 @@ class AbstractPush2View(AbstractPush2Section):
     def on_pad_released(self, pad_n, pad_ij, velocity):
         raise NotImplementedError
 
+    def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
+        raise NotImplementedError
+
 
 class Push2DebugView(AbstractPush2View):
 
@@ -40,3 +43,6 @@ class Push2DebugView(AbstractPush2View):
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
         print('Pad released', pad_n, pad_ij, velocity)
+
+    def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
+        print('Pad aftertouch', pad_n, pad_ij, velocity)

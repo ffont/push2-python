@@ -9,7 +9,7 @@ from .pads import Push2Pads
 from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME
 from .classes import Push2DebugView
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
 
 class Push2(object):
@@ -34,7 +34,7 @@ class Push2(object):
         try:
             self.display.configure_usb_device()
         except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
-            logging.debug('Could not initialize Push 2 Display: {0}'.format(e))
+            logging.error('Could not initialize Push 2 Display: {0}'.format(e))
 
         # Init Pads
         self.pads = Push2Pads(self)
@@ -44,7 +44,7 @@ class Push2(object):
             self.configure_midi_ports()
             self.midi_in_port.callback = self.on_midi_message
         except (Push2MIDIeviceNotFound) as e:
-            logging.debug('Could not initialize Push 2 Pads: {0}'.format(e))
+            logging.error('Could not initialize Push 2 Pads: {0}'.format(e))
 
     def add_view(self, view):
         """Gets a view class and adds it to current views initializing it with current
@@ -74,4 +74,6 @@ class Push2(object):
         TODO: we could add a bit of logic here to interpret MIDI messages and only
         call the `on_midi_nessage` method of the correspoidng section."""
         self.pads.on_midi_message(message)
+
+        logging.debug('Received MIDI message from Push: {0}'.format(message))
 

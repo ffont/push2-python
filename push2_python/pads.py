@@ -7,7 +7,21 @@ from .classes import AbstractPush2Section
 class Push2Pads(AbstractPush2Section):
     """Class to interface with Ableton's Push2 pads.
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
-    """    
+    """
+
+    def set_polyphonic_aftertouch(self):
+        """Set pad aftertouch mode to polyphonic aftertouch
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
+        """
+        msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x01, 0xF7])
+        self.push2.midi_out_port.send(msg)
+
+    def set_channel_aftertouch(self):
+        """Set pad aftertouch mode to channel aftertouch
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
+        """
+        msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x00, 0xF7])
+        self.push2.midi_out_port.send(msg)
 
     def pad_ij_to_pad_n(self, i, j):
         """Transform (i, j) coordinates to the corresponding pad number
@@ -76,14 +90,17 @@ class Push2Pads(AbstractPush2Section):
         self.set_all_pads_to_color('blue', animation=animation)
 
     def on_midi_message(self, message):
-        if message.type in ['note_on', 'note_off']:
+        if message.type in ['note_on', 'note_off', 'polytouch']:
             if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
                 pad_n = message.note
                 pad_ij = self.pad_n_to_pad_ij(pad_n)
-                velocity = message.velocity
+                if message.type == 'polytouch':
+                    velocity = message.value
+                else:
+                    velocity = message.velocity
                 if message.type == 'note_on':   
                     self.push2.trigger_on_view('on_pad_pressed', pad_n, pad_ij, velocity)
                 elif message.type == 'note_off':
                     self.push2.trigger_on_view('on_pad_released', pad_n, pad_ij, velocity)
-        
-        # TODO: add support for polyphonic AT messages
+                elif message.type == 'polytouch':
+                    self.push2.trigger_on_view('on_pad_aftertouch', pad_n, pad_ij, velocity)
