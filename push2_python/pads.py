@@ -1,6 +1,6 @@
 import mido
 import weakref
-from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT
+from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
 from .classes import AbstractPush2Section
 
 
@@ -14,14 +14,14 @@ class Push2Pads(AbstractPush2Section):
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
         """
         msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x01, 0xF7])
-        self.push2.midi_out_port.send(msg)
+        self.push.send_midi_to_push(msg)
 
     def set_channel_aftertouch(self):
         """Set pad aftertouch mode to channel aftertouch
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
         """
         msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x00, 0xF7])
-        self.push2.midi_out_port.send(msg)
+        self.push.send_midi_to_push(msg)
 
     def pad_ij_to_pad_n(self, i, j):
         """Transform (i, j) coordinates to the corresponding pad number
@@ -50,7 +50,7 @@ class Push2Pads(AbstractPush2Section):
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
         msg = mido.Message('note_on', note=pad, velocity=color, channel=1)
-        self.push2.midi_out_port.send(msg)
+        self.push.send_midi_to_push(msg)
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
@@ -90,17 +90,17 @@ class Push2Pads(AbstractPush2Section):
         self.set_all_pads_to_color('blue', animation=animation)
 
     def on_midi_message(self, message):
-        if message.type in ['note_on', 'note_off', 'polytouch']:
+        if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT]:
             if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
                 pad_n = message.note
                 pad_ij = self.pad_n_to_pad_ij(pad_n)
-                if message.type == 'polytouch':
+                if message.type == MIDO_POLYAT:
                     velocity = message.value
                 else:
                     velocity = message.velocity
-                if message.type == 'note_on':   
-                    self.push2.trigger_on_view('on_pad_pressed', pad_n, pad_ij, velocity)
-                elif message.type == 'note_off':
-                    self.push2.trigger_on_view('on_pad_released', pad_n, pad_ij, velocity)
-                elif message.type == 'polytouch':
-                    self.push2.trigger_on_view('on_pad_aftertouch', pad_n, pad_ij, velocity)
+                if message.type == MIDO_NOTEON:   
+                    self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)
+                elif message.type == MIDO_NOTEOFF:
+                    self.push.trigger_action(ACTION_PAD_RELEASED, pad_n, pad_ij, velocity)
+                elif message.type == MIDO_POLYAT:
+                    self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)

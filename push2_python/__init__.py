@@ -3,13 +3,13 @@ import usb.util
 import logging
 import sys
 import mido
+from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
 from .pads import Push2Pads
 from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME
-from .classes import Push2DebugView
 
-logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 class Push2(object):
@@ -20,14 +20,12 @@ class Push2(object):
     midi_out_port = None
     display = None
     pads = None
-    views = None
+    handler_registry = None
 
-    def __init__(self):
+    def __init__(self, scope):
 
-        self.views = []
-
-        # Add debug view to active views
-        self.add_view(Push2DebugView)
+        # Build action handlers registry
+        self.register_handlers(scope)
 
         # Init Display
         self.display = Push2Display(self)
@@ -46,20 +44,19 @@ class Push2(object):
         except (Push2MIDIeviceNotFound) as e:
             logging.error('Could not initialize Push 2 Pads: {0}'.format(e))
 
-    def add_view(self, view):
-        """Gets a view class and adds it to current views initializing it with current
-        Push2 object instance"""
-        if view.name not in [v.name for v in self.views]:
-            self.views.append(view(self))
+    def register_handlers(self, scope):
+        self.handler_registry = defaultdict(list)
+        for func in scope.values():
+            if hasattr(func, '_action_handler'):
+                logging.debug('Registered handler {0} for action {1}'.format(func, func._action_handler))
+                self.handler_registry[func._action_handler].append(func)
 
-    def remove_view(self, view):
-        self.views = [v for v in self.views if v.name != view.name]
-
-    def trigger_on_view(self, *args, **kwargs):
-        method_name = args[0]
-        new_args = args[1:]
-        for view in self.views:
-            getattr(view, method_name)(*new_args, **kwargs)
+    def trigger_action(self, *args, **kwargs):
+        action_name = args[0]
+        new_args = [self] + list(args[1:])
+        for action, func in self.handler_registry.items():
+            if action == action_name:
+                func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
     def configure_midi_ports(self):
         try:
@@ -67,6 +64,10 @@ class Push2(object):
             self.midi_out_port = mido.open_output(PUSH2_MIDI_OUT_PORT_NAME)
         except OSError:
             raise Push2MIDIeviceNotFound
+
+    def send_midi_to_push(self, msg):
+        if self.midi_out_port is not None:
+            self.midi_out_port.send(msg)
 
     def on_midi_message(self, message):
         """Handle incomming MIDI messages from Push.
@@ -77,3 +78,13 @@ class Push2(object):
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
+
+def action_handler(action_name):
+    """
+    This decorator annotates the decorated function with a '_action_handler' property
+    with a reference to the Push2 action upon which it should be called.
+    """
+    def wrapper(func):
+        func._action_handler = action_name
+        return func
+    return wrapper

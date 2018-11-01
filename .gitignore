@@ -3,5 +3,4 @@
 __pycache__/
 .vscode/
 test.py
-test_app.py
 push_doc

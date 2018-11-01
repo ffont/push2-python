@@ -8,6 +8,10 @@ PUSH2_MIDI_OUT_PORT_NAME = 'Ableton Push 2 Live Port'
 PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'  
 # TODO: sort out what to really do with Live/User ports
 
+MIDO_NOTEON = 'note_on'
+MIDO_NOTEOFF = 'note_off' 
+MIDO_POLYAT = 'polytouch'
+
 # Push 2 Display
 DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,
                         0x00, 0x00, 0x00, 0x00,
@@ -40,3 +44,8 @@ ANIMATIONS = {  # TODO: animations only work when MIDI clock data is sent (which
     'blinking': 14
 }
 ANIMATIONS_DEFAULT = 0
+
+# Push2 actions
+ACTION_PAD_PRESSED = 'on_pad_pressed'
+ACTION_PAD_RELEASED = 'on_pad_released'
+ACTION_PAD_AFTERTOUCH = 'on_pad_aftertouch'
