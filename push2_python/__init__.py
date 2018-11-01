@@ -11,6 +11,8 @@ from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
+action_handler_registry = defaultdict(list)
+
 
 class Push2(object):
     """Class to interface with Ableton's Push2.
@@ -20,12 +22,8 @@ class Push2(object):
     midi_out_port = None
     display = None
     pads = None
-    handler_registry = None
 
-    def __init__(self, scope):
-
-        # Build action handlers registry
-        self.register_handlers(scope)
+    def __init__(self):
 
         # Init Display
         self.display = Push2Display(self)
@@ -44,17 +42,10 @@ class Push2(object):
         except (Push2MIDIeviceNotFound) as e:
             logging.error('Could not initialize Push 2 Pads: {0}'.format(e))
 
-    def register_handlers(self, scope):
-        self.handler_registry = defaultdict(list)
-        for func in scope.values():
-            if hasattr(func, '_action_handler'):
-                logging.debug('Registered handler {0} for action {1}'.format(func, func._action_handler))
-                self.handler_registry[func._action_handler].append(func)
-
     def trigger_action(self, *args, **kwargs):
         action_name = args[0]
         new_args = [self] + list(args[1:])
-        for action, func in self.handler_registry.items():
+        for action, func in action_handler_registry.items():
             if action == action_name:
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
@@ -81,10 +72,10 @@ class Push2(object):
 
 def action_handler(action_name):
     """
-    This decorator annotates the decorated function with a '_action_handler' property
-    with a reference to the Push2 action upon which it should be called.
+    TODO: document this
     """
     def wrapper(func):
-        func._action_handler = action_name
+        logging.debug('Registered handler {0} for action {1}'.format(func, action_name))
+        action_handler_registry[action_name].append(func)
         return func
     return wrapper
