@@ -7,6 +7,7 @@ from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
 from .pads import Push2Pads
+from .touchstrip import Push2TouchStrip
 from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -22,6 +23,7 @@ class Push2(object):
     midi_out_port = None
     display = None
     pads = None
+    touchtrip = None
 
     def __init__(self):
 
@@ -32,8 +34,9 @@ class Push2(object):
         except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
             logging.error('Could not initialize Push 2 Display: {0}'.format(e))
 
-        # Init Pads
+        # Init individual sections
         self.pads = Push2Pads(self)
+        self.touchtrip = Push2TouchStrip(self)
 
         # Configure MIDI ports
         try:
@@ -66,6 +69,7 @@ class Push2(object):
         TODO: we could add a bit of logic here to interpret MIDI messages and only
         call the `on_midi_nessage` method of the correspoidng section."""
         self.pads.on_midi_message(message)
+        self.touchtrip.on_midi_message(message)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 

@@ -11,6 +11,7 @@ PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'
 MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off' 
 MIDO_POLYAT = 'polytouch'
+MIDI_PITCWHEEL = 'pitchwheel'
 
 # Push 2 Display
 DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,
@@ -49,3 +50,4 @@ ANIMATIONS_DEFAULT = 0
 ACTION_PAD_PRESSED = 'on_pad_pressed'
 ACTION_PAD_RELEASED = 'on_pad_released'
 ACTION_PAD_AFTERTOUCH = 'on_pad_aftertouch'
+ACTION_TOUCHSTRIP_TOUCHED = 'on_touchstrip_touched'

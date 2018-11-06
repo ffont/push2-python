@@ -32,6 +32,13 @@ def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
         'polytouch', note=pad_ij_to_midi_note(pad_ij), value=velocity)
     midi_outport.send(msg)
 
+
+@push2_python.action_handler(push2_python.constants.ACTION_TOUCHSTRIP_TOUCHED)
+def on_touchstrip_touched(push, value):
+    msg = mido.Message('pitchwheel', pitch=value)
+    midi_outport.send(msg)
+    
+
 push = push2_python.Push2()
 push.pads.set_polyphonic_aftertouch()
 push.pads.set_all_pads_to_color('white')
