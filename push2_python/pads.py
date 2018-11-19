@@ -1,5 +1,4 @@
 import mido
-import weakref
 from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
 from .classes import AbstractPush2Section
 
@@ -38,7 +37,6 @@ class Push2Pads(AbstractPush2Section):
     def pad_n_to_pad_ij(self, n):
         """Transform MIDI note number to pad (i, j) coordinates.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
-        TODO: test this function
         """
         return (99 - n) // 8, 7 - (99 - n) % 8
 
@@ -49,7 +47,7 @@ class Push2Pads(AbstractPush2Section):
         pad = self.pad_ij_to_pad_n(i, j)
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
-        msg = mido.Message('note_on', note=pad, velocity=color, channel=1)
+        msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=1)
         self.push.send_midi_to_push(msg)
 
     def set_pads_color(self, color_matrix, animation_matrix=None):

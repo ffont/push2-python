@@ -1,3 +1,8 @@
+import os
+
+# Push2 map file
+PUSH2_MAP_FILE_PATH = os.path.join(os.path.dirname(__file__), 'Push2-map.json')
+
 # USB device/transfer settings
 ABLETON_VENDOR_ID = 0x2982
 PUSH2_PRODUCT_ID = 0x1967
@@ -12,6 +17,7 @@ MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off' 
 MIDO_POLYAT = 'polytouch'
 MIDI_PITCWHEEL = 'pitchwheel'
+MIDO_CONTROLCHANGE = 'control_change'
 
 # Push 2 Display
 DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,
@@ -51,3 +57,5 @@ ACTION_PAD_PRESSED = 'on_pad_pressed'
 ACTION_PAD_RELEASED = 'on_pad_released'
 ACTION_PAD_AFTERTOUCH = 'on_pad_aftertouch'
 ACTION_TOUCHSTRIP_TOUCHED = 'on_touchstrip_touched'
+ACTION_BUTTON_PRESSED = 'on_button_pressed' 
+ACTION_BUTTON_RELEASED = 'on_button_released'

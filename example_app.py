@@ -39,6 +39,16 @@ def on_touchstrip_touched(push, value):
     midi_outport.send(msg)
     
 
+@push2_python.action_handler(push2_python.constants.ACTION_BUTTON_PRESSED)
+def on_button_pressed(push, button_name):
+    print('Button', button_name, 'pressed')
+
+
+@push2_python.action_handler(push2_python.constants.ACTION_BUTTON_RELEASED)
+def on_button_released(push, button_name):
+    print('Button', button_name, 'released')
+
+
 push = push2_python.Push2()
 push.pads.set_polyphonic_aftertouch()
 push.pads.set_all_pads_to_color('white')

@@ -3,12 +3,14 @@ import usb.util
 import logging
 import sys
 import mido
+import json
 from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
 from .pads import Push2Pads
+from .buttons import Push2Buttons
 from .touchstrip import Push2TouchStrip
-from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME
+from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -21,11 +23,18 @@ class Push2(object):
     """
     midi_in_port = None
     midi_out_port = None
+    push2_map = None
     display = None
     pads = None
+    buttons = None
     touchtrip = None
+    
 
     def __init__(self):
+
+        # Load Push2 map from JSON file provided in Push2's interface doc
+        # https://github.com/Ableton/push-interface/blob/master/doc/Push2-map.json
+        self.push2_map = json.load(open(PUSH2_MAP_FILE_PATH))
 
         # Init Display
         self.display = Push2Display(self)
@@ -34,16 +43,17 @@ class Push2(object):
         except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
             logging.error('Could not initialize Push 2 Display: {0}'.format(e))
 
-        # Init individual sections
-        self.pads = Push2Pads(self)
-        self.touchtrip = Push2TouchStrip(self)
-
         # Configure MIDI ports
         try:
             self.configure_midi_ports()
             self.midi_in_port.callback = self.on_midi_message
         except (Push2MIDIeviceNotFound) as e:
-            logging.error('Could not initialize Push 2 Pads: {0}'.format(e))
+            logging.error('Could not initialize Push 2 MIDI: {0}'.format(e))
+
+        # Init individual sections
+        self.pads = Push2Pads(self)
+        self.buttons = Push2Buttons(self)
+        self.touchtrip = Push2TouchStrip(self)
 
     def trigger_action(self, *args, **kwargs):
         action_name = args[0]
@@ -69,6 +79,7 @@ class Push2(object):
         TODO: we could add a bit of logic here to interpret MIDI messages and only
         call the `on_midi_nessage` method of the correspoidng section."""
         self.pads.on_midi_message(message)
+        self.buttons.on_midi_message(message)
         self.touchtrip.on_midi_message(message)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
