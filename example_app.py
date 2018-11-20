@@ -33,6 +33,15 @@ def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
     midi_outport.send(msg)
 
 
+@push2_python.on_pad_pressed(pad_n=36)
+def on_pad_36_pressed(push, velocity):
+    pad_ij = push.pads.pad_n_to_pad_ij(36)
+    push.pads.set_pad_color(pad_ij[0], pad_ij[1], 'green')
+    msg = mido.Message(
+        'note_on', note=pad_ij_to_midi_note(pad_ij), velocity=velocity)
+    midi_outport.send(msg)
+
+
 @push2_python.on_touchstrip()
 def on_touchstrip(push, value):
     msg = mido.Message('pitchwheel', pitch=value)

@@ -7,7 +7,7 @@ import json
 from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
-from .pads import Push2Pads
+from .pads import Push2Pads, get_individual_pad_action_name
 from .buttons import Push2Buttons, get_individual_button_action_name
 from .touchstrip import Push2TouchStrip
 from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
@@ -88,17 +88,22 @@ class Push2(object):
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
 
-def action_handler(action_name, button_name=None):
+def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None):
     """
     Generic action handler decorator used by other specific decorators.
     This decorator should not be used directly. Specific decorators for individual actions should be used instead.
     """
     def wrapper(func):
         action = action_name
-        if (action_name == ACTION_BUTTON_PRESSED or action_name == ACTION_BUTTON_RELEASED) and button_name is not None:
-            # If the action is pressing or releasing a button and a spcific button name was given,
+        if action_name in [ACTION_BUTTON_PRESSED, ACTION_BUTTON_RELEASED] and button_name is not None:
+            # If the action is pressing or releasing a button and a spcific button name is given,
             # include the button name in the action name so that it can be triggered individually
             action = get_individual_button_action_name(action_name, button_name)
+        if action_name in [ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH] and (pad_n is not None or pad_ij is not None):
+            # If the action is pressing, releasing or aftertouching a pad and a spcific pad number or
+            # pad ij coordinates are given name was given, include the pad name or cordinate in the 
+            # action name so that it can be triggered individually
+            action = get_individual_pad_action_name(action_name, pad_n=pad_n, pad_ij=pad_ij)
         logging.debug('Registered handler {0} for action {1}'.format(func, action))
         action_handler_registry[action].append(func)
         return func
@@ -153,43 +158,76 @@ def on_touchstrip():
     return action_handler(ACTION_TOUCHSTRIP_TOUCHED)
 
 
-def on_pad_pressed():
+def on_pad_pressed(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_PRESSED events.
+    Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
     Functions decorated by this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the velocity with which the pad was
-    pressed as the fourth argument. Examples:
+    pressed as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
+    set in the decorator, then only the Push2 object and velocity arguments are
+    passed to the handler function. Examples:
 
     @push2_python.on_pad_pressed()
     def function(push, pad_n, pad_ij, velocity):
         print('Pad', pad_n, 'pressed with velocity', velocity)
+
+    @push2_python.on_pad_pressed(pad_n=36)
+    def function(push, velocity):
+        print('Pad 36 pressed with velocity', velocity)
+
+    @push2_python.on_pad_pressed(pad_ij=(0,3))
+    def function(push, velocity):
+        print('Pad (0, 3) pressed with velocity', velocity)
     """
-    return action_handler(ACTION_PAD_PRESSED)
+    return action_handler(ACTION_PAD_PRESSED, pad_n=pad_n, pad_ij=pad_ij)
 
 
-def on_pad_released():
+def on_pad_released(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_RELEASED events.
+    Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
     Functions decorated by this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the velocity with which the pad was
-    released as the fourth argument. Examples:
+    released as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
+    set in the decorator, then only the Push2 object and velocity arguments are
+    passed to the handler function. Examples:
 
     @push2_python.on_pad_released()
     def function(push, pad_n, pad_ij, velocity):
         print('Pad', pad_n, 'released with velocity', velocity)
+
+    @push2_python.on_pad_released(pad_n=36)
+    def function(push, velocity):
+        print('Pad 36 released with velocity', velocity)
+
+    @push2_python.on_pad_released(pad_ij=(0,3))
+    def function(push, velocity):
+        print('Pad (0, 3) released with velocity', velocity)
     """
-    return action_handler(ACTION_PAD_RELEASED)
+    return action_handler(ACTION_PAD_RELEASED, pad_n=pad_n, pad_ij=pad_ij)
 
 
-def on_pad_aftertouch():
+def on_pad_aftertouch(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_AFTERTOUCH events.
+    Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
     Functions decorated by this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the current aftertouch (velocity) value
-    as the fourth argument. Examples:
+    as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
+    set in the decorator, then only the Push2 object and velocity arguments are
+    passed to the handler function. Examples:
 
     @push2_python.on_pad_aftertouch()
     def function(push, pad_n, pad_ij, velocity):
-        print('Pad', pad_n, 'released with velocity', velocity)
+        print('Pad', pad_n, 'aftertouch with velocity', velocity)
+
+    @push2_python.on_pad_aftertouch(pad_n=36)
+    def function(push, velocity):
+        print('Pad 36 aftertouched with velocity', velocity)
+
+    @push2_python.on_pad_aftertouch(pad_ij=(0,3))
+    def function(push, velocity):
+        print('Pad (0, 3) aftertouched with velocity', velocity)
     """
-    return action_handler(ACTION_PAD_AFTERTOUCH)
+    return action_handler(ACTION_PAD_AFTERTOUCH, pad_n=pad_n, pad_ij=pad_ij)

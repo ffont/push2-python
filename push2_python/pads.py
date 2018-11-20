@@ -3,6 +3,33 @@ from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEF
 from .classes import AbstractPush2Section
 
 
+def pad_ij_to_pad_n(i, j):
+    """Transform (i, j) coordinates to the corresponding pad number
+    according to the specification. (0, 0) corresponds to the top-left pad while
+    (7, 7) corresponds to the bottom right pad.
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
+    """
+
+    def clamp(value, minv, maxv):
+        return max(minv, min(value, maxv))
+
+    return 92 - (clamp(i, 0, 7) * 8) + clamp(j, 0, 7)
+
+
+def pad_n_to_pad_ij(n):
+    """Transform MIDI note number to pad (i, j) coordinates.
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
+    """
+    return (99 - n) // 8, 7 - (99 - n) % 8
+
+
+def get_individual_pad_action_name(action_name, pad_n=None, pad_ij=None):
+    n = pad_n
+    if pad_n is None:
+        n = pad_ij_to_pad_n(pad_ij[0], pad_ij[1])
+    return '{0} - {1}'.format(action_name, n)
+
+
 class Push2Pads(AbstractPush2Section):
     """Class to interface with Ableton's Push2 pads.
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
@@ -23,22 +50,10 @@ class Push2Pads(AbstractPush2Section):
         self.push.send_midi_to_push(msg)
 
     def pad_ij_to_pad_n(self, i, j):
-        """Transform (i, j) coordinates to the corresponding pad number
-        according to the specification. (0, 0) corresponds to the top-left pad while
-        (7, 7) corresponds to the bottom right pad.
-        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
-        """
-        
-        def clamp(value, minv, maxv):
-            return max(minv, min(value, maxv))
-
-        return 92 - (clamp(i, 0, 7) * 8) + clamp(j, 0, 7)
+        return pad_ij_to_pad_n(i, j)
 
     def pad_n_to_pad_ij(self, n):
-        """Transform MIDI note number to pad (i, j) coordinates.
-        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
-        """
-        return (99 - n) // 8, 7 - (99 - n) % 8
+        return pad_n_to_pad_ij(n)
 
     def set_pad_color(self, i, j, color='white', animation='static'):
         """Sets the color of the pad at the (i, j) coordinate.
@@ -97,8 +112,14 @@ class Push2Pads(AbstractPush2Section):
                 else:
                     velocity = message.velocity
                 if message.type == MIDO_NOTEON:   
-                    self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)
+                    self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)  # Trigger generic pad action
+                    self.push.trigger_action(get_individual_pad_action_name(
+                        ACTION_PAD_PRESSED, pad_n=pad_n))  # Trigger individual pad action as well
                 elif message.type == MIDO_NOTEOFF:
                     self.push.trigger_action(ACTION_PAD_RELEASED, pad_n, pad_ij, velocity)
+                    self.push.trigger_action(get_individual_pad_action_name(
+                        ACTION_PAD_RELEASED, pad_n=pad_n))  # Trigger individual pad action as well
                 elif message.type == MIDO_POLYAT:
                     self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)
+                    self.push.trigger_action(get_individual_pad_action_name(
+                        ACTION_PAD_AFTERTOUCH, pad_n=pad_n))  # Trigger individual pad action as well
