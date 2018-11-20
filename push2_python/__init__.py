@@ -8,9 +8,10 @@ from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
 from .pads import Push2Pads
-from .buttons import Push2Buttons
+from .buttons import Push2Buttons, get_individual_button_action_name
 from .touchstrip import Push2TouchStrip
-from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH
+from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
+    ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -57,7 +58,9 @@ class Push2(object):
 
     def trigger_action(self, *args, **kwargs):
         action_name = args[0]
-        new_args = [self] + list(args[1:])
+        new_args = [self]
+        if len(args) > 1:
+            new_args += list(args[1:])
         for action, func in action_handler_registry.items():
             if action == action_name:
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
@@ -85,12 +88,108 @@ class Push2(object):
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
 
-def action_handler(action_name):
+def action_handler(action_name, button_name=None):
     """
-    TODO: document this
+    Generic action handler decorator used by other specific decorators.
+    This decorator should not be used directly. Specific decorators for individual actions should be used instead.
     """
     def wrapper(func):
-        logging.debug('Registered handler {0} for action {1}'.format(func, action_name))
-        action_handler_registry[action_name].append(func)
+        action = action_name
+        if (action_name == ACTION_BUTTON_PRESSED or action_name == ACTION_BUTTON_RELEASED) and button_name is not None:
+            # If the action is pressing or releasing a button and a spcific button name was given,
+            # include the button name in the action name so that it can be triggered individually
+            action = get_individual_button_action_name(action_name, button_name)
+        logging.debug('Registered handler {0} for action {1}'.format(func, action))
+        action_handler_registry[action].append(func)
         return func
     return wrapper
+
+
+def on_button_pressed(button_name=None):
+    """Shortcut for registering handlers for ACTION_BUTTON_PRESSED events.
+    Optional "button_name" argument is to link the handler to a specific button.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument and the button name as second argument if it was not
+    already specified in the decorator. Examples:
+
+    @push2_python.on_button_pressed()
+    def function(push, button_name):
+        print('Button', button_name, 'pressed')
+
+    @push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
+    def function(push):
+        print('Button 1/6 pressed')
+    """
+    return action_handler(ACTION_BUTTON_PRESSED, button_name=button_name)
+
+
+def on_button_released(button_name=None):
+    """Shortcut for registering handlers for ACTION_BUTTON_RELEASED events.
+    Optional "button_name" argument is to link the handler to a specific button.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument and the button name as second argument if it was not
+    already specified in the decorator. Examples:
+
+    @push2_python.on_button_released()
+    def function(push, button_name):
+        print('Button', button_name, 'released')
+
+    @push2_python.on_button_released(push2_python.constants.BUTTON_1_16)
+    def function(push):
+        print('Button 1/6 released')
+    """
+    return action_handler(ACTION_BUTTON_RELEASED, button_name=button_name)
+
+
+def on_touchstrip():
+    """Shortcut for registering handlers for ACTION_TOUCHSTRIP_TOUCHED events.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument and a pitchbend value as the second aegument. Examples:
+
+    @push2_python.on_touchstrip()
+    def function(push, value):
+        print('Touchstrip touched with value', value)
+    """
+    return action_handler(ACTION_TOUCHSTRIP_TOUCHED)
+
+
+def on_pad_pressed():
+    """Shortcut for registering handlers for ACTION_PAD_PRESSED events.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument, the pad number as the second argument, the pad (i,j)
+    coordinates as the third argument, and the velocity with which the pad was
+    pressed as the fourth argument. Examples:
+
+    @push2_python.on_pad_pressed()
+    def function(push, pad_n, pad_ij, velocity):
+        print('Pad', pad_n, 'pressed with velocity', velocity)
+    """
+    return action_handler(ACTION_PAD_PRESSED)
+
+
+def on_pad_released():
+    """Shortcut for registering handlers for ACTION_PAD_RELEASED events.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument, the pad number as the second argument, the pad (i,j)
+    coordinates as the third argument, and the velocity with which the pad was
+    released as the fourth argument. Examples:
+
+    @push2_python.on_pad_released()
+    def function(push, pad_n, pad_ij, velocity):
+        print('Pad', pad_n, 'released with velocity', velocity)
+    """
+    return action_handler(ACTION_PAD_RELEASED)
+
+
+def on_pad_aftertouch():
+    """Shortcut for registering handlers for ACTION_PAD_AFTERTOUCH events.
+    Functions decorated by this decorator will receive the Push2 object instance
+    as the first argument, the pad number as the second argument, the pad (i,j)
+    coordinates as the third argument, and the current aftertouch (velocity) value
+    as the fourth argument. Examples:
+
+    @push2_python.on_pad_aftertouch()
+    def function(push, pad_n, pad_ij, velocity):
+        print('Pad', pad_n, 'released with velocity', velocity)
+    """
+    return action_handler(ACTION_PAD_AFTERTOUCH)

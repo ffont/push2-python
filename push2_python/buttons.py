@@ -3,6 +3,10 @@ from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEF
 from .classes import AbstractPush2Section
 
 
+def get_individual_button_action_name(action_name, button_name):
+        return '{0} - {1}'.format(action_name, button_name)
+
+
 class Push2Buttons(AbstractPush2Section):
     """Class to interface with Ableton's Push2 buttons.
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
@@ -46,4 +50,6 @@ class Push2Buttons(AbstractPush2Section):
             if message.note in self.buttons_map:  # CC number corresponds to one of the buttons
                 button = self.buttons_map[message.note]
                 action = ACTION_BUTTON_PRESSED if message.velocity == 127 else ACTION_BUTTON_RELEASED
-                self.push.trigger_action(action, button['Name'])
+                self.push.trigger_action(action, button['Name'])  # Trigger generic button action
+                self.push.trigger_action(get_individual_button_action_name(action, button['Name']))  # Trigger individual button action as well
+
