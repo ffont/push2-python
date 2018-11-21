@@ -46,7 +46,7 @@ class Push2Buttons(AbstractPush2Section):
             else:
                 color = BLACK_WHITE_COLORS.get(color, BLACK_WHITE_DEFAULT_COLOR)  # Pick color from black and white palette
             animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
-            msg = mido.Message(MIDO_CONTROLCHANGE, value=button_n, velocity=color, channel=animation)
+            msg = mido.Message(MIDO_CONTROLCHANGE, control=button_n, value=color, channel=animation)
             self.push.send_midi_to_push(msg)
         
     def on_midi_message(self, message):
