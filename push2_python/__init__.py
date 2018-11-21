@@ -82,9 +82,8 @@ class Push2(object):
 
     def on_midi_message(self, message):
         """Handle incomming MIDI messages from Push.
-        Call `on_midi_nessage` of each individual section.
-        TODO: we could add a bit of logic here to interpret MIDI messages and only
-        call the `on_midi_nessage` method of the correspoidng section."""
+        Call `on_midi_nessage` for each individual section.
+        """
         self.pads.on_midi_message(message)
         self.buttons.on_midi_message(message)
         self.encoders.on_midi_message(message)
