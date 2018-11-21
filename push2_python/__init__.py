@@ -132,7 +132,7 @@ def on_button_pressed(button_name=None):
 
     @push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
     def function(push):
-        print('Button 1/6 pressed')
+        print('Button 1/16 pressed')
     """
     return action_handler(ACTION_BUTTON_PRESSED, button_name=button_name)
 
