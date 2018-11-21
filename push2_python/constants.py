@@ -35,7 +35,7 @@ DISPLAY_N_LINES_PER_BUFFER = 8
 DISPLAY_BUFFER_SIZE = DISPLAY_LINE_SIZE * DISPLAY_N_LINES_PER_BUFFER
 
 # LEDS
-RGB_COLORS = {
+RGB_COLORS = {  # TODO add more colors from palette
     'black': 0,
     'white': 122,
     'light_gray': 123,

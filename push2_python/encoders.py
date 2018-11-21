@@ -10,7 +10,7 @@ def get_individual_encoder_action_name(action_name, encoder_name):
 
 class Push2Encoders(AbstractPush2Section):
     """Class to interface with Ableton's Push2 encoders.
-    See xxx
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Encoders
     """
 
     encoder_map = None
@@ -35,7 +35,7 @@ class Push2Encoders(AbstractPush2Section):
     def encoder_name_to_encoder_n(self, encoder_name):
         """
         Gets encoder number from given encoder name
-        See xxx
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
         """
         return self.encoder_names_index.get(encoder_name, None)
 
@@ -47,7 +47,7 @@ class Push2Encoders(AbstractPush2Section):
                     action = ACTION_ENCODER_ROTATED
                     value = message.value
                     if message.value > 63:
-                        # Counter-clockwise movement, see xxx
+                        # Counter-clockwise movement, see https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Encoders
                         value = -1 * (128 - message.value)
                     self.push.trigger_action(action, encoder['Name'], value)  # Trigger generic rotate encoder action
                     self.push.trigger_action(get_individual_encoder_action_name(
