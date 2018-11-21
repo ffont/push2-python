@@ -63,6 +63,31 @@ def on_button_1_16_pressed(push):
     print('Button 1/6 pressed')
 
 
+@push2_python.on_encoder_touched()
+def on_encoder_touched(push, encoder_name):
+    print('Encoder', encoder_name, 'touched')
+
+
+@push2_python.on_encoder_released()
+def on_encoder_released(push, encoder_name):
+    print('Encoder', encoder_name, 'released')
+
+
+@push2_python.on_encoder_touched(push2_python.constants.ENCODER_MASTER_ENCODER)
+def on_master_encoder_touched(push):
+    print('Master encoder touched')
+
+
+@push2_python.on_encoder_rotated()
+def on_encoder_rotated(push, encoder_name, value):
+    print('Encoder', encoder_name, 'rotated with value', value)
+
+
+@push2_python.on_encoder_rotated(push2_python.constants.ENCODER_MASTER_ENCODER)
+def on_master_encoder_rotated(push, value):
+    print('Master encoder rotated with value', value)
+
+
 
 push = push2_python.Push2()
 push.pads.set_polyphonic_aftertouch()

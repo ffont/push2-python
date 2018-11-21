@@ -9,9 +9,11 @@ from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError
 from .display import Push2Display
 from .pads import Push2Pads, get_individual_pad_action_name
 from .buttons import Push2Buttons, get_individual_button_action_name
+from .encoders import Push2Encoders, get_individual_encoder_action_name
 from .touchstrip import Push2TouchStrip
 from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
-    ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
+    ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
+    ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -28,6 +30,7 @@ class Push2(object):
     display = None
     pads = None
     buttons = None
+    encoders = None
     touchtrip = None
     
 
@@ -54,6 +57,7 @@ class Push2(object):
         # Init individual sections
         self.pads = Push2Pads(self)
         self.buttons = Push2Buttons(self)
+        self.encoders = Push2Encoders(self)
         self.touchtrip = Push2TouchStrip(self)
 
     def trigger_action(self, *args, **kwargs):
@@ -83,12 +87,13 @@ class Push2(object):
         call the `on_midi_nessage` method of the correspoidng section."""
         self.pads.on_midi_message(message)
         self.buttons.on_midi_message(message)
+        self.encoders.on_midi_message(message)
         self.touchtrip.on_midi_message(message)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
 
-def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None):
+def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None, encoder_name=None):
     """
     Generic action handler decorator used by other specific decorators.
     This decorator should not be used directly. Specific decorators for individual actions should be used instead.
@@ -104,6 +109,10 @@ def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None):
             # pad ij coordinates are given name was given, include the pad name or cordinate in the 
             # action name so that it can be triggered individually
             action = get_individual_pad_action_name(action_name, pad_n=pad_n, pad_ij=pad_ij)
+        if action_name in [ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED] and encoder_name is not None:
+            # If the action is rotating, touching or releasing a rotatory encoder and a specific encoder 
+            # name is given, include the encoder name in the action name so that it can be triggered individually
+            action = get_individual_encoder_action_name(action_name, encoder_name=encoder_name)
         logging.debug('Registered handler {0} for action {1}'.format(func, action))
         action_handler_registry[action].append(func)
         return func
@@ -113,7 +122,7 @@ def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None):
 def on_button_pressed(button_name=None):
     """Shortcut for registering handlers for ACTION_BUTTON_PRESSED events.
     Optional "button_name" argument is to link the handler to a specific button.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument and the button name as second argument if it was not
     already specified in the decorator. Examples:
 
@@ -131,7 +140,7 @@ def on_button_pressed(button_name=None):
 def on_button_released(button_name=None):
     """Shortcut for registering handlers for ACTION_BUTTON_RELEASED events.
     Optional "button_name" argument is to link the handler to a specific button.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument and the button name as second argument if it was not
     already specified in the decorator. Examples:
 
@@ -148,7 +157,7 @@ def on_button_released(button_name=None):
 
 def on_touchstrip():
     """Shortcut for registering handlers for ACTION_TOUCHSTRIP_TOUCHED events.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument and a pitchbend value as the second aegument. Examples:
 
     @push2_python.on_touchstrip()
@@ -161,7 +170,7 @@ def on_touchstrip():
 def on_pad_pressed(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_PRESSED events.
     Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the velocity with which the pad was
     pressed as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
@@ -186,7 +195,7 @@ def on_pad_pressed(pad_n=None, pad_ij=None):
 def on_pad_released(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_RELEASED events.
     Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the velocity with which the pad was
     released as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
@@ -211,7 +220,7 @@ def on_pad_released(pad_n=None, pad_ij=None):
 def on_pad_aftertouch(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_AFTERTOUCH events.
     Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
-    Functions decorated by this decorator will receive the Push2 object instance
+    Functions decorated with this decorator will receive the Push2 object instance
     as the first argument, the pad number as the second argument, the pad (i,j)
     coordinates as the third argument, and the current aftertouch (velocity) value
     as the fourth argument. If optional "pad_n" or "pad_ij" arguments are
@@ -231,3 +240,61 @@ def on_pad_aftertouch(pad_n=None, pad_ij=None):
         print('Pad (0, 3) aftertouched with velocity', velocity)
     """
     return action_handler(ACTION_PAD_AFTERTOUCH, pad_n=pad_n, pad_ij=pad_ij)
+
+
+def on_encoder_rotated(encoder_name=None):
+    """Shortcut for registering handlers for ACTION_ENCODER_ROTATED events.
+    Optional "encoder_name" argument is to link the handler to a specific encoder.
+    Functions decorated with this decorator will receive the Push2 object instance
+    as the first argument, the encoder name as second argument, and the encoder movement
+    value since the last message sent (negative values mean counter-clockwise rotations 
+    while positive values mean clockwise rotations). If "encoder_name" is set in the 
+    decorator, then the second argument is ommited when calling the handler. Examples:
+
+    @push2_python.on_encoder_rotated()
+    def function(push, encoder_name, value):
+        print('Encoder', encoder_name, 'rotated with value', value)
+
+    @push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TRACK1_ENCODER)
+    def function(push, value):
+        print('Encoder for Track 1 rotated with value', value)
+    """
+    return action_handler(ACTION_ENCODER_ROTATED, encoder_name=encoder_name)
+
+
+def on_encoder_touched(encoder_name=None):
+    """Shortcut for registering handlers for ACTION_ENCODER_TOUCHED events.
+    Optional "encoder_name" argument is to link the handler to a specific encoder.
+    Functions decorated with this decorator will receive the Push2 object instance
+    as the first argument and the encoder name as second argument. If "encoder_name" 
+    is set in the decorator, then the second argument is ommited when calling the 
+    handler. Examples:
+
+    @push2_python.on_encoder_touched()
+    def function(push, encoder_name):
+        print('Encoder', encoder_name, 'touched')
+
+    @push2_python.on_encoder_touched(push2_python.constants.ENCODER_TRACK1_ENCODER)
+    def function(push):
+        print('Encoder for Track 1 touched')
+    """
+    return action_handler(ACTION_ENCODER_TOUCHED, encoder_name=encoder_name)
+
+
+def on_encoder_released(encoder_name=None):
+    """Shortcut for registering handlers for ACTION_ENCODER_RELEASED events.
+    Optional "encoder_name" argument is to link the handler to a specific encoder.
+    Functions decorated with this decorator will receive the Push2 object instance
+    as the first argument and the encoder name as second argument. If "encoder_name" 
+    is set in the decorator, then the second argument is ommited when calling the 
+    handler. Examples:
+
+    @push2_python.on_encoder_released()
+    def function(push, encoder_name):
+        print('Encoder', encoder_name, 'released')
+
+    @push2_python.on_encoder_released(push2_python.constants.ENCODER_TRACK1_ENCODER)
+    def function(push):
+        print('Encoder for Track 1 released')
+    """
+    return action_handler(ACTION_ENCODER_RELEASED, encoder_name=encoder_name)

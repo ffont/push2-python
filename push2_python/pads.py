@@ -114,12 +114,12 @@ class Push2Pads(AbstractPush2Section):
                 if message.type == MIDO_NOTEON:   
                     self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)  # Trigger generic pad action
                     self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_PRESSED, pad_n=pad_n))  # Trigger individual pad action as well
+                        ACTION_PAD_PRESSED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
                 elif message.type == MIDO_NOTEOFF:
                     self.push.trigger_action(ACTION_PAD_RELEASED, pad_n, pad_ij, velocity)
                     self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_RELEASED, pad_n=pad_n))  # Trigger individual pad action as well
+                        ACTION_PAD_RELEASED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
                 elif message.type == MIDO_POLYAT:
                     self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)
                     self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_AFTERTOUCH, pad_n=pad_n))  # Trigger individual pad action as well
+                        ACTION_PAD_AFTERTOUCH, pad_n=pad_n), velocity)  # Trigger individual pad action as well

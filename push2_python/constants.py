@@ -59,6 +59,9 @@ ACTION_PAD_AFTERTOUCH = 'on_pad_aftertouch'
 ACTION_TOUCHSTRIP_TOUCHED = 'on_touchstrip_touched'
 ACTION_BUTTON_PRESSED = 'on_button_pressed' 
 ACTION_BUTTON_RELEASED = 'on_button_released'
+ACTION_ENCODER_ROTATED = 'on_encoder_rotated'
+ACTION_ENCODER_TOUCHED = 'on_encoder_touched'
+ACTION_ENCODER_RELEASED = 'on_encoder_released'
 
 # Push2 button names
 # NOTE: the list of button names is here to facilitate autocompletion when developing apps using push2_python package, but is not needed for the package
@@ -132,3 +135,23 @@ BUTTON_PAGE_LEFT = 'Page Left'
 BUTTON_PAGE_RIGHT = 'Page Right'
 BUTTON_SHIFT = 'Shift'
 BUTTON_SELECT = 'Select'
+
+
+# Push2 encoder names
+# NOTE: the list of encoder names is here to facilitate autocompletion when developing apps using push2_python package, but is not needed for the package
+# This list was generated using the following code:
+# import json
+# data = json.load(open('push2_python/Push2-map.json'))
+# for item in data['Parts']['RotaryEncoders']:
+#     print('ENCODER_{0} = \'{1}\''.format(item['Name'].replace(' ', '_').upper(), item['Name']))
+ENCODER_TEMPO_ENCODER = 'Tempo Encoder'
+ENCODER_SWING_ENCODER = 'Swing Encoder'
+ENCODER_TRACK1_ENCODER = 'Track1 Encoder'
+ENCODER_TRACK2_ENCODER = 'Track2 Encoder'
+ENCODER_TRACK3_ENCODER = 'Track3 Encoder'
+ENCODER_TRACK4_ENCODER = 'Track4 Encoder'
+ENCODER_TRACK5_ENCODER = 'Track5 Encoder'
+ENCODER_TRACK6_ENCODER = 'Track6 Encoder'
+ENCODER_TRACK7_ENCODER = 'Track7 Encoder'
+ENCODER_TRACK8_ENCODER = 'Track8 Encoder'
+ENCODER_MASTER_ENCODER = 'Master Encoder'

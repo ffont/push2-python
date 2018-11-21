@@ -9,16 +9,16 @@ def get_individual_button_action_name(action_name, button_name):
 
 class Push2Buttons(AbstractPush2Section):
     """Class to interface with Ableton's Push2 buttons.
-    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Buttons
     """
 
-    buttons_map = None
+    button_map = None
     button_names_index = None
     button_names_list = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.buttons_map = {data['Number']: data for data in self.push.push2_map['Parts']['Buttons']}
+        self.button_map = {data['Number']: data for data in self.push.push2_map['Parts']['Buttons']}
         self.button_names_index = {data['Name']: data['Number'] for data in self.push.push2_map['Parts']['Buttons']}
         self.button_names_list = list(self.button_names_index.keys())
 
@@ -46,9 +46,9 @@ class Push2Buttons(AbstractPush2Section):
             #self.push.send_midi_to_push(msg)
         
     def on_midi_message(self, message):
-        if message.type in [MIDO_CONTROLCHANGE]:
-            if message.note in self.buttons_map:  # CC number corresponds to one of the buttons
-                button = self.buttons_map[message.note]
+        if message.type == MIDO_CONTROLCHANGE:
+            if message.control in self.button_map:  # CC number corresponds to one of the buttons
+                button = self.button_map[message.control]
                 action = ACTION_BUTTON_PRESSED if message.velocity == 127 else ACTION_BUTTON_RELEASED
                 self.push.trigger_action(action, button['Name'])  # Trigger generic button action
                 self.push.trigger_action(get_individual_button_action_name(action, button['Name']))  # Trigger individual button action as well
