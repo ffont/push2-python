@@ -50,12 +50,12 @@ def on_touchstrip(push, value):
 
 @push2_python.on_button_pressed()
 def on_button_pressed(push, button_name):
-    print('Button', button_name, 'pressed')
+    push.buttons.set_button_color(button_name, 'white')
 
 
 @push2_python.on_button_released()
 def on_button_released(push, button_name):
-    print('Button', button_name, 'released')
+    push.buttons.set_button_color(button_name, 'black')
 
 
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
