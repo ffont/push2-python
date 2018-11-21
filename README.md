@@ -3,7 +3,7 @@ Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) fro
 
 These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) to facilitate comunicating with Push 2.
 
-So far I only implemented some **utils to use the display** and some **basic utils to interface with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. configuring sensitivity curves, setting colors of buttons) has not yet been implemented. I plan to include utils for this as well, but contributions are also welcome :)
+So far I only implemented some **utils to use the display** and some **basic utils to interface with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements has not yet been implemented. I plan to include utils for this as well, but contributions are also welcome :)
 
 **NOTE 1**: I only testd the utils in Python 3, but it should work with 2 as well.
 
@@ -89,10 +89,12 @@ for j in range(0, 5):
     push.display.display_last_frame()
     time.sleep(1)
 
-# Set pad colors
+# Set pad and button colors
 for color in ['white', 'red', 'green', 'blue']:
     push.pads.set_all_pads_to_color(color)
+    push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, color)
     time.sleep(0.5)
+
 
 # Start infinite loop. From now on app only reacts to action handlers
 print('App runnnig...')

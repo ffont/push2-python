@@ -1,5 +1,6 @@
 import mido
-from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_CONTROLCHANGE, ACTION_BUTTON_PRESSED, ACTION_BUTTON_RELEASED
+from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, BLACK_WHITE_COLORS, BLACK_WHITE_DEFAULT_COLOR, ANIMATIONS, \
+    ANIMATIONS_DEFAULT, MIDO_CONTROLCHANGE, ACTION_BUTTON_PRESSED, ACTION_BUTTON_RELEASED
 from .classes import AbstractPush2Section
 
 
@@ -29,21 +30,24 @@ class Push2Buttons(AbstractPush2Section):
     def button_name_to_button_n(self, button_name):
         """
         Gets button number from given button name
-        See xxx
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping
         """
         return self.button_names_index.get(button_name, None)
 
-    def set_pad_color(self, button_name, color='white', animation='static'):
+    def set_button_color(self, button_name, color='white', animation='static'):
         """Sets the color of the button with given name.
-        See xxx
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#setting-led-colors
         """
         button_n = self.button_name_to_button_n(button_name)
         if button_n is not None:
-            color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
+            button = self.button_map[button_n]
+            if button['Color']:
+                color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)  # Pick color from RGB palette
+            else:
+                color = BLACK_WHITE_COLORS.get(color, BLACK_WHITE_DEFAULT_COLOR)  # Pick color from black and white palette
             animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
-            # TODO: test following implementation of set button color
-            #msg = mido.Message('control_change', value=button_n, velocity=color, channel=1)
-            #self.push.send_midi_to_push(msg)
+            msg = mido.Message(MIDO_CONTROLCHANGE, value=button_n, velocity=color, channel=animation)
+            self.push.send_midi_to_push(msg)
         
     def on_midi_message(self, message):
         if message.type == MIDO_CONTROLCHANGE:

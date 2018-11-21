@@ -44,13 +44,21 @@ RGB_COLORS = {
     'green': 126,
     'red': 127,
 }
-RGB_DEFAULT_COLOR = 0
+RGB_DEFAULT_COLOR = 126
 
-ANIMATIONS = {  # TODO: animations only work when MIDI clock data is sent (which is not so far)
-    'static': 0,
+BLACK_WHITE_COLORS = {
+    'black': 0,
+    'dark_gray': 16,
+    'light_gray': 48,
+    'white': 127,
+}
+BLACK_WHITE_DEFAULT_COLOR = 127
+
+ANIMATIONS = {  # TODO: animations only work when MIDI clock data is sent (?)
+    'static': 1,  # TODO: revise these values, static should be 0?
     'blinking': 14
 }
-ANIMATIONS_DEFAULT = 0
+ANIMATIONS_DEFAULT = 1
 
 # Push2 actions
 ACTION_PAD_PRESSED = 'on_pad_pressed'

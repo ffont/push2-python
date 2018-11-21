@@ -62,7 +62,7 @@ class Push2Pads(AbstractPush2Section):
         pad = self.pad_ij_to_pad_n(i, j)
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
-        msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=1)
+        msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=animation)
         self.push.send_midi_to_push(msg)
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
