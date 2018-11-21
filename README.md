@@ -20,8 +20,8 @@ import random
 import time
 
 
+# Util function to generate an image with some colors
 def generate_3_color_frame():
-    # Util function to generate an image with some colors
     colors = [(random.random(), random.random(), random.random()),
               (random.random(), random.random(), random.random()),
               (random.random(), random.random(), random.random())]
@@ -39,8 +39,8 @@ def generate_3_color_frame():
     return frame
 
 
+# Util function to read an image form a file
 def generate_frame_from_img(img_path):
-    # Util function to read an image form a file
     from PIL import Image
     import numpy
     img = Image.open(img_path)
