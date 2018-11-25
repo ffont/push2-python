@@ -53,7 +53,7 @@ class Push2Buttons(AbstractPush2Section):
         if message.type == MIDO_CONTROLCHANGE:
             if message.control in self.button_map:  # CC number corresponds to one of the buttons
                 button = self.button_map[message.control]
-                action = ACTION_BUTTON_PRESSED if message.velocity == 127 else ACTION_BUTTON_RELEASED
+                action = ACTION_BUTTON_PRESSED if message.value == 127 else ACTION_BUTTON_RELEASED
                 self.push.trigger_action(action, button['Name'])  # Trigger generic button action
                 self.push.trigger_action(get_individual_button_action_name(action, button['Name']))  # Trigger individual button action as well
 

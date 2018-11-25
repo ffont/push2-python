@@ -55,7 +55,7 @@ class Push2Encoders(AbstractPush2Section):
         elif message.type in [MIDO_NOTEON, MIDO_NOTEOFF]:  # Encoder touched or released
             if message.note in self.encoder_touch_map:  # Note number corresponds to one of the encoders in touch mode
                 encoder = self.encoder_touch_map[message.note]
-                action = ACTION_ENCODER_TOUCHED if message.type == MIDO_NOTEON else ACTION_ENCODER_RELEASED
+                action = ACTION_ENCODER_TOUCHED if message.velocity == 127 else ACTION_ENCODER_RELEASED
                 self.push.trigger_action(action, encoder['Name'])  # Trigger generic touch/release encoder action
                 self.push.trigger_action(get_individual_encoder_action_name(
                     action, encoder['Name']))  # Trigger individual touch/release encoder action as well
