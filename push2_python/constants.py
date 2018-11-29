@@ -10,11 +10,11 @@ USB_TRANSFER_TIMEOUT = 1000
 
 # MIDI
 PUSH2_MIDI_OUT_PORT_NAME = 'Ableton Push 2 Live Port'
-PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'  
+PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'
 # TODO: sort out what to really do with Live/User ports
 
 MIDO_NOTEON = 'note_on'
-MIDO_NOTEOFF = 'note_off' 
+MIDO_NOTEOFF = 'note_off'
 MIDO_POLYAT = 'polytouch'
 MIDI_PITCWHEEL = 'pitchwheel'
 MIDO_CONTROLCHANGE = 'control_change'
@@ -24,7 +24,6 @@ DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,
                         0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00]
-DISPLAY_XOR_PATTERN = [0xE7, 0xF3, 0xE7, 0xFF]
 DISPLAY_N_LINES = 160
 DISPLAY_LINE_PIXELS = 960
 DISPLAY_PIXEL_BYTES = 2  # bytes
@@ -33,6 +32,8 @@ DISPLAY_LINE_SIZE = DISPLAY_LINE_PIXELS * \
     DISPLAY_PIXEL_BYTES + DISPLAY_LINE_FILLER_BYTES
 DISPLAY_N_LINES_PER_BUFFER = 8
 DISPLAY_BUFFER_SIZE = DISPLAY_LINE_SIZE * DISPLAY_N_LINES_PER_BUFFER
+DISPLAY_FRAME_XOR_PATTERN = [0xE7F3, 0xE7FF] * (
+    ((DISPLAY_LINE_PIXELS + (DISPLAY_LINE_FILLER_BYTES // 2)) * DISPLAY_N_LINES) // 2)
 
 # LEDS
 RGB_COLORS = {  # TODO add more colors from palette
@@ -65,7 +66,7 @@ ACTION_PAD_PRESSED = 'on_pad_pressed'
 ACTION_PAD_RELEASED = 'on_pad_released'
 ACTION_PAD_AFTERTOUCH = 'on_pad_aftertouch'
 ACTION_TOUCHSTRIP_TOUCHED = 'on_touchstrip_touched'
-ACTION_BUTTON_PRESSED = 'on_button_pressed' 
+ACTION_BUTTON_PRESSED = 'on_button_pressed'
 ACTION_BUTTON_RELEASED = 'on_button_released'
 ACTION_ENCODER_ROTATED = 'on_encoder_rotated'
 ACTION_ENCODER_TOUCHED = 'on_encoder_touched'
