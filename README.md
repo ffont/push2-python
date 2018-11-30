@@ -16,13 +16,9 @@ Here's some example code, easy isn't it?
 
 ```python
 import push2_python
-import random
-import time
-
 
 # Init Push2
 push = push2_python.Push2()
-
 
 # Set up some action handlers that will trigger when interacting with Push2
 @push2_python.on_pad_pressed()
@@ -50,16 +46,56 @@ def on_button_pressed(push):
     print('Button 1/16 pressed')
 
 
-# Set pad and button colors
-for color in ['white', 'red', 'green', 'blue']:
-    push.pads.set_all_pads_to_color(color)
-    push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, color)
-    time.sleep(0.5)
+# Start infinite loop. From now on app only reacts to action handlers
+print('App runnnig...')
+while True:
+    pass
+```
+
+Now let's try setting pad and button colors when these are pressed:
+
+```python
+import push2_python
+
+# Init Push2
+push = push2_python.Push2()
+
+# Start by setting all pad colors to white
+push.pads.set_all_pads_to_color('white')
+
+@push2_python.on_button_pressed()
+def on_button_pressed(push, button_name):
+    push.buttons.set_button_color(button_name, 'white')
+
+@push2_python.on_button_released()
+def on_button_released(push, button_name):
+    push.buttons.set_button_color(button_name, 'black')
+
+@push2_python.on_pad_pressed()
+def on_pad_pressed(push, pad_n, pad_ij, velocity):
+    push.pads.set_pad_color(pad_ij[0], pad_ij[1], 'green')
+
+@push2_python.on_pad_released()
+def on_pad_released(push, pad_n, pad_ij, velocity):
+    push.pads.set_pad_color(pad_ij[0], pad_ij[1], 'white')
+
+# Start infinite loop. From now on app only reacts to action handlers
+print('App runnnig...')
+while True:
+    pass
+```
 
 
-# Show some colors on the display
+Finally let's see how to interface with the display:
+
+```python
+import push2_python
+
+# Init Push2
+push = push2_python.Push2()
+
+# Define util function to generate a frame with some colors to be shown in the display
 def generate_3_color_frame():
-    # Util function to generate an image with some colors
     colors = ['{b:05b}{g:06b}{r:05b}'.format(r=random.random(), g=random.random(), b=random.random()),
               '{b:05b}{g:06b}{r:05b}'.format(
                   r=random.random(), g=random.random(), b=random.random()),
@@ -77,19 +113,22 @@ def generate_3_color_frame():
         frame.append(line_bytes)
     return frame
 
+# Now generate frames and display them on Push
 for j in range(0, 5):
     frame = generate_3_color_frame()
     push.display.display_frame(frame)
     time.sleep(1)
 
-# Repeat display last frame so the image stays on screen
+# Load an image from a file
+from PIL import Image
+import numpy
+img = Image.open('test_img_960x160.png')
+img_array = numpy.array(img)
+frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
+push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
+
+# Repeat display last frame (the image) so the image stays on screen, otherwise Push2's display turns black after 2 seconds
 for j in range(0, 5):
     push.display.display_last_frame()
     time.sleep(1)
-
-# Start infinite loop. From now on app only reacts to action handlers
-print('App runnnig...')
-while True:
-    pass
-
 ```
