@@ -125,26 +125,6 @@ class Push2Display(AbstractPush2Section):
 
         self.usb_endpoint = out_endpoint
 
-    @staticmethod
-    def rgb_to_pixel_bytes(r, g, b):
-        """Returns the 2 bytes represeting a pixel's RGB components given
-        RGB values in the range [0.0, 1.0]. 
-        Return bytes in correct endianess according to specification.
-        NOTE: this function is provided as a utility funtion for testing purposes only
-        or for when speed is not requited. It is very slow and should not be used for creating images in real time.
-        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#322-pixel-data
-        """
-
-        def clamp(value, minv, maxv):
-            return max(minv, min(value, maxv))
-
-        r = clamp(int(round(r * (pow(2, 5) - 1))), 0, pow(2, 5))
-        g = clamp(int(round(g * (pow(2, 6) - 1))), 0, pow(2, 6))
-        b = clamp(int(round(b * (pow(2, 5) - 1))), 0, pow(2, 5))
-        byte_string = '{b:05b}{g:06b}{r:05b}'.format(r=r, g=g, b=b)
-
-        return (int(byte_string[8:], 2), int(byte_string[:8], 2))
-
     def prepare_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         """Prepare the given image frame to be shown in the Push2's display.
         `frame` must be a numpy array of shape 910x160. Elements of the array represent colors in either

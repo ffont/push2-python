@@ -20,11 +20,50 @@ import random
 import time
 
 
-# Util function to generate an image with some colors
+# Init Push2
+push = push2_python.Push2()
+
+
+# Set up some action handlers that will trigger when interacting with Push2
+@push2_python.on_pad_pressed()
+def on_pad_pressed(push, pad_n, pad_ij, velocity):
+    print('Pad', pad_ij, 'pressed with velocity', velocity)
+
+
+@push2_python.on_touchstrip()
+def on_touchstrip(push, value):
+    print('Touchstrip touched with value', value)
+
+
+@push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TRACK1_ENCODER)
+def on_encoder_rotated(push, value):
+    print('Encoder for Track 1 rotated with value', value)
+
+
+@push2_python.on_encoder_touched()
+def on_encoder_touched(push, encoder_name):
+    print('Encoder', encoder_name, 'touched')
+
+
+@push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
+def on_button_pressed(push):
+    print('Button 1/16 pressed')
+
+
+# Set pad and button colors
+for color in ['white', 'red', 'green', 'blue']:
+    push.pads.set_all_pads_to_color(color)
+    push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, color)
+    time.sleep(0.5)
+
+
+# Show some colors on the display
 def generate_3_color_frame():
-    colors = [(random.random(), random.random(), random.random()),
-              (random.random(), random.random(), random.random()),
-              (random.random(), random.random(), random.random())]
+    # Util function to generate an image with some colors
+    colors = ['{b:05b}{g:06b}{r:05b}'.format(r=random.random(), g=random.random(), b=random.random()),
+              '{b:05b}{g:06b}{r:05b}'.format(
+                  r=random.random(), g=random.random(), b=random.random()),
+              '{b:05b}{g:06b}{r:05b}'.format(r=random.random(), g=random.random(), b=random.random())]
     line_bytes = []
     for i in range(0, 960):  # 960 pixels per line
         if i <= 960 // 3:
@@ -38,63 +77,15 @@ def generate_3_color_frame():
         frame.append(line_bytes)
     return frame
 
-
-# Util function to read an image form a file
-def generate_frame_from_img(img_path):
-    from PIL import Image
-    import numpy
-    img = Image.open(img_path)
-    img_array = numpy.array(img)
-    frame = img_array/255
-    return frame
-
-
-# Set up some action handlers that will trigger when interacting with Push2
-@push2_python.on_pad_pressed()
-def on_pad_pressed(push, pad_n, pad_ij, velocity):
-    print('Pad', pad_ij, 'pressed with velocity', velocity)
-
-@push2_python.on_touchstrip()
-def on_touchstrip(push, value):
-    print('Touchstrip touched with value', value)
-
-@push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TRACK1_ENCODER)
-def on_encoder_rotated(push, value):
-    print('Encoder for Track 1 rotated with value', value)
-
-@push2_python.on_encoder_touched()
-def on_encoder_touched(push, encoder_name):
-    print('Encoder', encoder_name, 'touched')
-
-@push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
-def on_button_pressed(push):
-    print('Button 1/16 pressed')
-
-
-# Init Push2
-push = push2_python.Push2()
-
-# Generate consecutive color frames for the display
 for j in range(0, 5):
     frame = generate_3_color_frame()
     push.display.display_frame(frame)
     time.sleep(1)
 
-# Generate frame from loaded image (requires "pip install Pillow numpy")
-frame = generate_frame_from_img("test_img_960x160.png")
-push.display.display_frame(frame)
-
 # Repeat display last frame so the image stays on screen
 for j in range(0, 5):
     push.display.display_last_frame()
     time.sleep(1)
-
-# Set pad and button colors
-for color in ['white', 'red', 'green', 'blue']:
-    push.pads.set_all_pads_to_color(color)
-    push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, color)
-    time.sleep(0.5)
-
 
 # Start infinite loop. From now on app only reacts to action handlers
 print('App runnnig...')
