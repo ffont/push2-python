@@ -5,7 +5,7 @@ from .classes import AbstractPush2Section
 from .exceptions import Push2USBDeviceConfigurationError, Push2USBDeviceNotFound
 from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT, DISPLAY_FRAME_HEADER, \
     DISPLAY_BUFFER_SIZE, DISPLAY_FRAME_XOR_PATTERN, DISPLAY_N_LINES, DISPLAY_LINE_PIXELS, DISPLAY_LINE_FILLER_BYTES, \
-    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB888
+    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB888, FRAME_FORMAT_RGB
 
 NP_DISPLAY_FRAME_XOR_PATTERN = numpy.array(
     DISPLAY_FRAME_XOR_PATTERN)  # Numpy array version of the constant
@@ -92,6 +92,23 @@ def create_vectorized_conversion_functions():
 # Vectorized functions to be used for converting from rgb565 to bgr565 and from rgb888 to bgr565
 rgb565_to_bgr565_vecotrized, rgb888_to_bgr565_vecotrized = create_vectorized_conversion_functions()
 
+# Non-vectorized function for converting from rgb to bgr565
+def rgb_to_bgr565(rgb_frame):
+    # RGB is defined here as an 2d array with (r, g, b) tuples with values between [0.0, 1.0]
+    # NOTE: this is really slow, should only be used offline
+    out_array = numpy.zeros(shape=(rgb_frame.shape[1], rgb_frame.shape[0]), dtype=numpy.uint16)
+    for i in range(0, rgb_frame.shape[0]):
+        for j in range(0, rgb_frame.shape[1]):
+            r = rgb_frame[i][j][0]
+            g = rgb_frame[i][j][0]
+            b = rgb_frame[i][j][0]
+            r = int(round(r * (pow(2, 5) - 1)))
+            g = int(round(g * (pow(2, 6) - 1)))
+            b = int(round(b * (pow(2, 5) - 1)))
+            out_array[j][i] = int(
+                '{b:05b}{g:06b}{r:05b}'.format(r=r, g=g, b=b), 2)
+    return out_array
+
 
 class Push2Display(AbstractPush2Section):
     """Class to interface with Ableton's Push2 display.
@@ -128,16 +145,26 @@ class Push2Display(AbstractPush2Section):
     def prepare_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         """Prepare the given image frame to be shown in the Push2's display.
         `frame` must be a numpy array of shape 910x160. Elements of the array represent colors in either
-        brg565, rgb565 or rgb888 formats. Preferred format is brg565 as it requires no conversion before sending
+        brg565, rgb565, rgb888 or rgb formats. Preferred format is brg565 as it requires no conversion before sending
         to Push2. Using brg565 it should be possible to achieve frame rates as high as 60fps (and theoretically more,
         but not supported by the display itself). With rgb565 the conversion slows down the process but should still 
         allow frame rates of 26fps. Sending data in rgb888 will result in very long frame preparation times that can
         take seconds. Therefore rgb888 format should only be used for displaying static images that are prepared offline.
+        Similarly, sending data with rgb format (i.e. array of shape 910x160x3 with r, g, b as floats in range [0.0, 1.0])
+        also results in very long conversion times that can take seconds and should only be used for images prepared offline.
         This function expects numpy array elements to be big endian.
         In addition to format changing (if needed), this function prepares the frame to be sent to push by adding 
         filler bytes and performing bitwise XOR as decribed in the Push2 specification.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#326-allocating-libusb-transfers
         """
+
+        assert input_format in [FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565,
+                                FRAME_FORMAT_RGB888, FRAME_FORMAT_RGB], 'Invalid frame format'
+
+        if input_format == FRAME_FORMAT_RGB:
+            # If format is rgb, do conversion before the rest as frame must be reshaped
+            # from (w, h, 3) to (w, h)
+            frame = rgb_to_bgr565(frame)
 
         assert type(frame) == numpy.ndarray
         assert frame.dtype == numpy.dtype('uint16')
@@ -145,7 +172,6 @@ class Push2Display(AbstractPush2Section):
             frame.shape[0])
         assert frame.shape[1] == DISPLAY_N_LINES, 'Wrong number of lines in frame ({0})'.format(
             frame.shape[1])
-        assert input_format in [FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB888], 'Invalid frame format'
 
         width = DISPLAY_LINE_PIXELS + DISPLAY_LINE_FILLER_BYTES // 2
         height = DISPLAY_N_LINES
@@ -158,6 +184,8 @@ class Push2Display(AbstractPush2Section):
             prepared_frame = rgb888_to_bgr565_vecotrized(prepared_frame)
         elif input_format == FRAME_FORMAT_BGR565:
             pass  # Nothing to do as this is already the requested format
+        elif input_format == FRAME_FORMAT_RGB:
+            pass  # Nothing as conversion was done before
         prepared_frame = prepared_frame.byteswap()  # Change to little endian
         prepared_frame = numpy.bitwise_xor(prepared_frame, NP_DISPLAY_FRAME_XOR_PATTERN)
 
