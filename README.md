@@ -95,6 +95,7 @@ import push2_python
 push = push2_python.Push2()
 
 # Define util function to generate a frame with some colors to be shown in the display
+# Frames are created as a matrix of shape 960x160 and with colors defined in bgr565 format
 def generate_3_color_frame():
     colors = ['{b:05b}{g:06b}{r:05b}'.format(r=random.random(), g=random.random(), b=random.random()),
               '{b:05b}{g:06b}{r:05b}'.format(
