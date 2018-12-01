@@ -90,6 +90,10 @@ Finally let's see how to interface with the display:
 
 ```python
 import push2_python
+import random
+from PIL import Image
+import numpy
+
 
 # Init Push2
 push = push2_python.Push2()
@@ -114,22 +118,30 @@ def generate_3_color_frame():
         frame.append(line_bytes)
     return frame
 
-# Now generate frames and display them on Push
-for j in range(0, 5):
-    frame = generate_3_color_frame()
-    push.display.display_frame(frame)
-    time.sleep(1)
+color_frames = [generate_3_color_frame(), generate_3_color_frame(), generate_3_color_frame()]
 
-# Load an image from a file
-from PIL import Image
-import numpy
+# Crate an extra frame by loading an image from a file
 img = Image.open('test_img_960x160.png')
 img_array = numpy.array(img)
 frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
-push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
+# Frame needs to be prepared before displaying as the format needs to be converted to one suitable for Push2's display
+# Some formats can be converted on the fly but not the RGB format retruned by PIL
+prepared_img_frame = push.display.prepare_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
 
-# Repeat display last frame (the image) so the image stays on screen, otherwise Push2's display turns black after 2 seconds
-for j in range(0, 5):
-    push.display.display_last_frame()
-    time.sleep(1)
+@push2_python.on_pad_pressed()
+def on_pad_pressed(push, pad_n, pad_ij, velocity):
+    # Display one of the three color frames on the display
+    random_frame = random.choice(color_frames)
+    push2.display.display_frame(random_frame)
+
+@push2_python.on_button_pressed()
+def on_button_pressed(push, button_name):
+    # Display the frame with the loaded image
+    push2.display.display_prepared_frame(prepared_img_frame)
+
+# Start infinite loop. From now on app only reacts to action handlers
+print('App runnnig...')
+while True:
+    pass
+
 ```

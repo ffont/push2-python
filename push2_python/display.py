@@ -193,7 +193,7 @@ class Push2Display(AbstractPush2Section):
         return prepared_frame
 
     def send_to_display(self, prepared_frame):
-        """Sends frame_bytes to Push2 display.
+        """Sends a prepared frame to Push2 display.
         First sends frame header and then sends prepared_frame in buffers of BUFFER_SIZE.
         'prepared_frame' must be a flattened array of (DISPLAY_LINE_PIXELS + (DISPLAY_LINE_FILLER_BYTES // 2)) * DISPLAY_N_LINES 16bit BGR 565 values
         as returned by the 'Push2Display.prepare_frame' method.
@@ -209,6 +209,9 @@ class Push2Display(AbstractPush2Section):
 
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         self.send_to_display(self.prepare_frame(frame, input_format=input_format))
+
+    def display_prepared_frame(self, prepared_frame):
+        self.send_to_display(prepared_frame)
 
     def display_last_frame(self):
         self.send_to_display(self.last_prepared_frame)
