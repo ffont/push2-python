@@ -145,10 +145,15 @@ img = Image.open('test_img_960x160.png')
 img_array = numpy.array(img)
 frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
 
-# Because the pixel format returned by Image.open is not the one required for Push2's display, this frame needs to be prepared before sending it to Push. This conversion takes a bit of time so we do it offline. Some formats can be converted on the fly by `push2-python` but not the RGB format retruned by PIL.
-prepared_img_frame = push.display.prepare_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
+# Because the pixel format returned by Image.open is not the one required for Push2's display,
+# this frame needs to be prepared before sending it to Push. This conversion takes a bit of 
+# time so we do it offline. Some formats can be converted on the fly by `push2-python` but not 
+# the RGB format retruned by PIL.
+prepared_img_frame = \
+    push.display.prepare_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
 
-# Now lets configure some action handlers which will display frames in Push2's display in reaction to pad and button presses
+# Now lets configure some action handlers which will display frames in Push2's display in 
+# reaction to pad and button presses
 @push2_python.on_pad_pressed()
 def on_pad_pressed(push, pad_n, pad_ij, velocity):
     # Display one of the three color frames on the display
