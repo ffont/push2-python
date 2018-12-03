@@ -9,9 +9,8 @@ PUSH2_PRODUCT_ID = 0x1967
 USB_TRANSFER_TIMEOUT = 1000
 
 # MIDI
-PUSH2_MIDI_OUT_PORT_NAME = 'Ableton Push 2 Live Port'
-PUSH2_MIDI_IN_PORT_NAME = 'Ableton Push 2 Live Port'
-# TODO: sort out what to really do with Live/User ports
+PUSH2_USER_PORT_NAME = 'Ableton Push 2 User Port'
+PUSH2_LIVE_PORT_NAME = 'Ableton Push 2 Live Port'
 
 MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off'

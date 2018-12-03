@@ -11,11 +11,11 @@ from .pads import Push2Pads, get_individual_pad_action_name
 from .buttons import Push2Buttons, get_individual_button_action_name
 from .encoders import Push2Encoders, get_individual_encoder_action_name
 from .touchstrip import Push2TouchStrip
-from .constants import PUSH2_MIDI_IN_PORT_NAME, PUSH2_MIDI_OUT_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
+from .constants import PUSH2_USER_PORT_NAME, PUSH2_LIVE_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
     ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
 action_handler_registry = defaultdict(list)
 
@@ -34,7 +34,13 @@ class Push2(object):
     touchtrip = None
     
 
-    def __init__(self):
+    def __init__(self, use_user_midi_port=False):
+        """Initializes object to interface with Ableton's Push2.
+        This function will set up USB and MIDI connections with the hardware device.
+        By default, MIDI connection will use LIVE MIDI port instead of USER MIDI port.
+        USER MIDI port can be configured using the argument 'use_user_midi_port'.
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc
+        """
 
         # Load Push2 map from JSON file provided in Push2's interface doc
         # https://github.com/Ableton/push-interface/blob/master/doc/Push2-map.json
@@ -49,7 +55,7 @@ class Push2(object):
 
         # Configure MIDI ports
         try:
-            self.configure_midi_ports()
+            self.configure_midi_ports(use_user_midi_port=use_user_midi_port)
             self.midi_in_port.callback = self.on_midi_message
         except (Push2MIDIeviceNotFound) as e:
             logging.error('Could not initialize Push 2 MIDI: {0}'.format(e))
@@ -69,10 +75,11 @@ class Push2(object):
             if action == action_name:
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
-    def configure_midi_ports(self):
+    def configure_midi_ports(self, use_user_midi_port=False:
+        port_name = PUSH2_USER_PORT_NAME if use_user_midi_port else PUSH2_LIVE_PORT_NAME
         try:
-            self.midi_in_port = mido.open_input(PUSH2_MIDI_IN_PORT_NAME)
-            self.midi_out_port = mido.open_output(PUSH2_MIDI_OUT_PORT_NAME)
+            self.midi_in_port = mido.open_input(port_name)
+            self.midi_out_port = mido.open_output(port_name)
         except OSError:
             raise Push2MIDIeviceNotFound
 
