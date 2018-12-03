@@ -2,11 +2,11 @@
 
 Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) from Python.
 
-These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) to comunicating with Push 2. I recommend reading this before using this tools.
+These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for comunicating with Push 2. I recommend reading Ableton's manual before using this tools.
 
-So far I only implemented some utils to **use the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements has not yet been implemented. Contributions are welcome :)
+So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, true support for led blinking) has not been implemented. Contributions are welcome :)
 
-**NOTE**: I only testd the package in Python 3. Some things will not work on Python 2 but it should be easy to port.
+I only testd the package in Python 3. Some things will not work on Python 2 but it should be easy to port.
 
 ## Install
 
