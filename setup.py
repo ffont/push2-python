@@ -9,4 +9,4 @@ setup(name='push2-python',
       license='MIT',
       install_requires=['numpy', 'pyusb', 'python-rtmidi', 'mido'],
       packages=find_packages(),
-      data_files=[('', ['push2_python/Push2-map.json'])])
+      data_files=[('push2_python', ['push2_python/Push2-map.json'])])
