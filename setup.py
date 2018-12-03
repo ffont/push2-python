@@ -8,5 +8,6 @@ setup(name='push2-python',
       author_email='frederic.font@gmail.com',
       license='MIT',
       install_requires=['numpy', 'pyusb', 'python-rtmidi', 'mido'],
+      python_requires='>=3',
       packages=find_packages(),
       data_files=[('push2_python', ['push2_python/Push2-map.json'])])
