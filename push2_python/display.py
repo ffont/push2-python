@@ -208,6 +208,7 @@ class Push2Display(AbstractPush2Section):
             self.usb_endpoint.write(
                 DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
 
+            prepared_frame = prepared_frame.tobytes()
             for i in range(0, len(prepared_frame), DISPLAY_BUFFER_SIZE):
                 buffer_data = prepared_frame[i: i + DISPLAY_BUFFER_SIZE]
                 self.usb_endpoint.write(buffer_data, USB_TRANSFER_TIMEOUT)

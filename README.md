@@ -4,9 +4,9 @@ Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) fro
 
 These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for comunicating with Push 2. I recommend reading Ableton's manual before using this tools.
 
-So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, true support for led blinking) has not been implemented. Contributions are welcome :)
+So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
 
-I only testd the package in Python 3. Some things will not work on Python 2 but it should be easy to port.
+I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. Not how it will work on Windows/Linux. It is possible that MIDI port names (see [constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
 
 ## Install
 
@@ -22,12 +22,23 @@ This will install python requirements as well. Note however that `push2-python` 
 
 Well, to be honest there is no proper documentation. However the use of this package is so simple that I hope it's going to be enough with the [code examples below](#code-examples) and the simple notes given here.
 
-**TODO**: this section has not been written yet ;)
+ **Initializing Push:** To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
+
+```python
+import push2_python
+push = push2_python.Push2() 
+```
+
+You can pass the optional argument `use_user_midi_port` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
+
+**Setting action handlers for buttons, encoders, pads and the touchstrip**
+
+You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by adding **Python decorators** to the functions that will be triggered in each case. These are the available decorators:
 
 
 ## Code examples
 
-### Set up handlers for pads, encoders, etc...
+### Set up handlers for pads, encoders, buttons and the touchstrip...
 
 ```python
 import push2_python
@@ -158,12 +169,12 @@ prepared_img_frame = \
 def on_pad_pressed(push, pad_n, pad_ij, velocity):
     # Display one of the three color frames on the display
     random_frame = random.choice(color_frames)
-    push2.display.display_frame(random_frame)
+    push.display.display_frame(random_frame)
 
 @push2_python.on_button_pressed()
 def on_button_pressed(push, button_name):
     # Display the frame with the loaded image
-    push2.display.display_prepared_frame(prepared_img_frame)
+    push.display.display_prepared_frame(prepared_img_frame)
 
 # Start infinite loop so the app keeps running
 print('App runnnig...')

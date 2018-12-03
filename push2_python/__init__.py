@@ -75,7 +75,7 @@ class Push2(object):
             if action == action_name:
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
-    def configure_midi_ports(self, use_user_midi_port=False:
+    def configure_midi_ports(self, use_user_midi_port=False):
         port_name = PUSH2_USER_PORT_NAME if use_user_midi_port else PUSH2_LIVE_PORT_NAME
         try:
             self.midi_in_port = mido.open_input(port_name)
