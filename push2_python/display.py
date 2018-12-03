@@ -1,6 +1,7 @@
 import usb.core
 import usb.util
 import numpy
+import logging
 from .classes import AbstractPush2Section
 from .exceptions import Push2USBDeviceConfigurationError, Push2USBDeviceNotFound
 from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT, DISPLAY_FRAME_HEADER, \
@@ -122,8 +123,12 @@ class Push2Display(AbstractPush2Section):
         to Push2's display.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#31-usb-display-interface-access
         """
-        usb_device = usb.core.find(
-            idVendor=ABLETON_VENDOR_ID, idProduct=PUSH2_PRODUCT_ID)
+        usb_device = None
+        try:
+            usb_device = usb.core.find(
+                idVendor=ABLETON_VENDOR_ID, idProduct=PUSH2_PRODUCT_ID)
+        except usb.core.NoBackendError:
+            logging.error('No backend is available for pyusb. Please make sure \'libusb\' is installed in your system.')
 
         if usb_device is None:
             raise Push2USBDeviceNotFound
