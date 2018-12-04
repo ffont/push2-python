@@ -22,7 +22,9 @@ This will install python requirements as well. Note however that `push2-python` 
 
 Well, to be honest there is no proper documentation. However the use of this package is so simple that I hope it's going to be enough with the [code examples below](#code-examples) and the simple notes given here.
 
- **Initializing Push:** To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
+ **Initializing Push** 
+ 
+ To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
 
 ```python
 import push2_python
@@ -36,9 +38,11 @@ You can pass the optional argument `use_user_midi_port` when initializing `push`
 You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by adding **Python decorators** to the functions that will be triggered in each case. The available decorators and the arguments that must be present in the decorated functions are [described here](https://github.com/ffont/push2-python/blob/master/push2_python/__init__.py#L128).
 
 **Set pad and button colors**
+
 TODO (for now see code examples below which should be useful enough to get you started)
 
 **Interface with the display**
+
 TODO (for now see code examples below which should be useful enough to get you started)
 
 
