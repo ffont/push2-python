@@ -8,6 +8,19 @@ So far I only implemented some utils to **interface with the display** and some 
 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. Not how it will work on Windows/Linux. It is possible that MIDI port names (see [constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
 
+
+Table of Contents
+=================
+
+* [Install](#install)
+* [Documentation](#documentation)
+* [Code examples](#code-examples)
+    * [Set up handlers for pads, encoders, buttons and the touchstrip...](#set-up-handlers-for-pads-encoders-buttons-and-the-touchstrip)
+    * [Light up buttons and pads](#light-up-buttons-and-pads)
+    * [Interface with the display (static content)](#interface-with-the-display-static-content)
+    * [Interface with the display (dynamic content)](#interface-with-the-display-dynamic-content)
+
+
 ## Install
 
 You can install using `pip` and pointing at this repository:
