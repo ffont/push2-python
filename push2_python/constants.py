@@ -38,8 +38,11 @@ FRAME_FORMAT_RGB565 = 'rgb565'
 FRAME_FORMAT_RGB = 'rgb'
 
 
-# LEDS
-RGB_COLORS = {  # TODO add more colors from palette
+# LED colors and anumations
+# NOTE: this is a subset of colors from the default palette
+# To do this properly we should define a custom color palette and
+# send it to Push
+RGB_COLORS = {  
     'black': 0,
     'white': 122,
     'light_gray': 123,
@@ -47,6 +50,11 @@ RGB_COLORS = {  # TODO add more colors from palette
     'blue': 125,
     'green': 126,
     'red': 127,
+    'orange': 3,
+    'yellow': 8,
+    'turquoise': 15,
+    'purple': 22,
+    'pink': 25,
 }
 RGB_DEFAULT_COLOR = 126
 
