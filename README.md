@@ -9,8 +9,7 @@ So far I only implemented some utils to **interface with the display** and some 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. Not how it will work on Windows/Linux. It is possible that MIDI port names (see [constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
 
 
-Table of Contents
-=================
+## Table of Contents
 
 * [Install](#install)
 * [Documentation](#documentation)
