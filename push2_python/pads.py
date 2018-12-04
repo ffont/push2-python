@@ -57,6 +57,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_pad_color(self, i, j, color='white', animation='static'):
         """Sets the color of the pad at the (i, j) coordinate.
+        Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
         pad = self.pad_ij_to_pad_n(i, j)
@@ -67,6 +68,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
+        Individual elements in the color_matrix must be an existing key of push2_python.contants.RGB_COLORS dictionary.
         Matrices must be 8x8, with 8 lines of 8 values corresponding to the pad grid from top-left to bottom-down.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
@@ -85,6 +87,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_all_pads_to_color(self, color='white', animation='static'):
         """Set all pads to the given color/animation.
+        Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
         """
         color_matrix = [[color for _ in range(0, 8)] for _ in range(0, 8)]
         animation_matrix = [[animation for _ in range(0, 8)] for _ in range(0, 8)]

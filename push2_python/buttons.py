@@ -36,6 +36,8 @@ class Push2Buttons(AbstractPush2Section):
 
     def set_button_color(self, button_name, color='white', animation='static'):
         """Sets the color of the button with given name.
+        Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        NOTE: some buttons only accept black and white colors and color name must be one of push2_python.contants.BLACK_WHITE_COLORS dictionary.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#setting-led-colors
         """
         button_n = self.button_name_to_button_n(button_name)
