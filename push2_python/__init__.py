@@ -3,7 +3,6 @@ import usb.util
 import logging
 import sys
 import mido
-import json
 from collections import defaultdict
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
@@ -11,6 +10,7 @@ from .pads import Push2Pads, get_individual_pad_action_name
 from .buttons import Push2Buttons, get_individual_button_action_name
 from .encoders import Push2Encoders, get_individual_encoder_action_name
 from .touchstrip import Push2TouchStrip
+from .push2_map import push2_map
 from .constants import PUSH2_USER_PORT_NAME, PUSH2_LIVE_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
     ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED
@@ -44,7 +44,7 @@ class Push2(object):
 
         # Load Push2 map from JSON file provided in Push2's interface doc
         # https://github.com/Ableton/push-interface/blob/master/doc/Push2-map.json
-        self.push2_map = json.load(open(PUSH2_MAP_FILE_PATH))
+        self.push2_map = push2_map
 
         # Init Display
         self.display = Push2Display(self)
