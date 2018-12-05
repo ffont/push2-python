@@ -75,8 +75,8 @@ def on_pad_pressed(push, pad_n, pad_ij, velocity):
     print('Pad', pad_ij, 'pressed with velocity', velocity)
 
 @push2_python.on_encoder_rotated()
-def on_encoder_rotated(push, encoder_name, value):
-    print('Encoder', encoder_name, 'rotated', value)
+def on_encoder_rotated(push, encoder_name, increment):
+    print('Encoder', encoder_name, 'rotated', increment)
 
 @push2_python.on_touchstrip()
 def on_touchstrip(push, value):
@@ -84,8 +84,8 @@ def on_touchstrip(push, value):
 
 # You can also set handlers for specic encoders or buttons by passing argument to the decorator
 @push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TRACK1_ENCODER)
-def on_encoder1_rotated(push, value):
-    print('Encoder for Track 1 rotated with value', value)
+def on_encoder1_rotated(push, incrememnt):
+    print('Encoder for Track 1 rotated with increment', increment)
 
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_1_16)
 def on_button_pressed(push):
@@ -259,7 +259,7 @@ def generate_display_frame(encoder_value, encoder_color, encoder_name):
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
-def on_encoder_rotated(push, encoder_name, value):
+def on_encoder_rotated(push, encoder_name, increment):
     def update_encoder_value(encoder_idx, increment):
         updated_value = int(encoders_state[encoder_idx]['value'] + increment)
         if updated_value < 0:
@@ -269,7 +269,7 @@ def on_encoder_rotated(push, encoder_name, value):
         else:
             encoders_state[encoder_idx]['value'] = updated_value
 
-    update_encoder_value(encoder_name, value)
+    update_encoder_value(encoder_name, increment)
     global last_selected_encoder
     last_selected_encoder = encoder_name
 
