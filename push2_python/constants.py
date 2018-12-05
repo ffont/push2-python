@@ -163,7 +163,7 @@ BUTTON_SELECT = 'Select'
 # data = json.load(open('push2_python/Push2-map.json'))
 # for item in data['Parts']['RotaryEncoders']:
 #     print('ENCODER_{0} = \'{1}\''.format(item['Name'].replace(' ', '_').upper(), item['Name']))
-ENCODER_TEMPO_ENCODER = 'Tempo Encoder'
+ENCODER_TEMPO_ENCODER = 'Tempo Encoder'  # Left-most encoder
 ENCODER_SWING_ENCODER = 'Swing Encoder'
 ENCODER_TRACK1_ENCODER = 'Track1 Encoder'
 ENCODER_TRACK2_ENCODER = 'Track2 Encoder'
@@ -173,4 +173,4 @@ ENCODER_TRACK5_ENCODER = 'Track5 Encoder'
 ENCODER_TRACK6_ENCODER = 'Track6 Encoder'
 ENCODER_TRACK7_ENCODER = 'Track7 Encoder'
 ENCODER_TRACK8_ENCODER = 'Track8 Encoder'
-ENCODER_MASTER_ENCODER = 'Master Encoder'
+ENCODER_MASTER_ENCODER = 'Master Encoder'  # Right-most encoder

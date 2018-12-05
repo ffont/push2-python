@@ -56,12 +56,12 @@ class Push2Pads(AbstractPush2Section):
     def pad_n_to_pad_ij(self, n):
         return pad_n_to_pad_ij(n)
 
-    def set_pad_color(self, i, j, color='white', animation='static'):
-        """Sets the color of the pad at the (i, j) coordinate.
+    def set_pad_color(self, pad_ij, color='white', animation='static'):
+        """Sets the color of the pad at the (i,j) coordinate.
         Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
-        pad = self.pad_ij_to_pad_n(i, j)
+        pad = self.pad_ij_to_pad_n(pad_ij[0], pad_ij[1])
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
         msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=animation)
@@ -84,7 +84,7 @@ class Push2Pads(AbstractPush2Section):
                 animation = None
                 if animation_matrix is not None:
                     animation = animation_matrix[i][j]
-                self.set_pad_color(i, j, color=color, animation=animation)
+                self.set_pad_color((i, j), color=color, animation=animation)
 
     def set_all_pads_to_color(self, color='white', animation='static'):
         """Set all pads to the given color/animation.

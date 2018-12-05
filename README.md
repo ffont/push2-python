@@ -6,13 +6,18 @@ These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://
 
 So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
 
-I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. Not how it will work on Windows/Linux. It is possible that MIDI port names (see [constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
+I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. Not how it will work on Windows/Linux. It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
 
 
 ## Table of Contents
 
 * [Install](#install)
 * [Documentation](#documentation)
+    * [Initializing Push](#initializing-push)
+    * [Setting action handlers for buttons, encoders, pads and the touchstrip](#setting-action-handlers-for-buttons--encoders--pads-and-the-touchstrip)
+    * [Button names, encoder names, pad numbers and coordinates](#button-names--encoder-names--pad-numbers-and-coordinates)
+    * [Set pad and button colors](#set-pad-and-button-colors)
+    * [Interface with the display](#interface-with-the-display)
 * [Code examples](#code-examples)
     * [Set up handlers for pads, encoders, buttons and the touchstrip...](#set-up-handlers-for-pads-encoders-buttons-and-the-touchstrip)
     * [Light up buttons and pads](#light-up-buttons-and-pads)
@@ -34,7 +39,7 @@ This will install python requirements as well. Note however that `push2-python` 
 
 Well, to be honest there is no proper documentation. However the use of this package is so simple that I hope it's going to be enough with the [code examples below](#code-examples) and the simple notes given here.
 
- **Initializing Push** 
+### Initializing Push
  
  To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
 
@@ -43,24 +48,120 @@ import push2_python
 push = push2_python.Push2() 
 ```
 
-You can pass the optional argument `use_user_midi_port` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
+**NOTE**: all code snippets below assume you import `push2_python` and initialize the `Push2` like in the snipped above.
 
-**Setting action handlers for buttons, encoders, pads and the touchstrip**
+You can pass the optional argument `use_user_midi_port=True` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
 
-You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by adding **Python decorators** to the functions that will be triggered in each case. The available decorators and the arguments that must be present in the decorated functions are [described here](https://github.com/ffont/push2-python/blob/master/push2_python/__init__.py#L128).
+### Setting action handlers for buttons, encoders, pads and the touchstrip
 
-**Set pad and button colors**
+You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by **decorating functions** that will be triggered in response to the physical actions. For example, you can set up an action handler that will be triggered when
+the left-most encoder is rotated in this way:
 
-TODO (for now see code examples below which should be useful enough to get you started)
+```python
+@push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TEMPO_ENCODER)
+def on_left_encoder_rotated(push, incrememnt):
+    print('Left-most encoder rotated with increment', increment)
+```
 
-**Interface with the display**
+Similarly, you can set up an action handler that will trigger when play button is pressed in this way:
 
-TODO (for now see code examples below which should be useful enough to get you started)
+```python
+@push2_python.on_button_pressed(push2_python.constants.BUTTON_PLAY)
+def on_play_pressed(push):
+    print('Play!')
+```
+
+These are all available decorators for setting up action handlers:
+
+* `@push2_python.on_button_pressed(button_name=None)`
+* `@push2_python.on_button_released(button_name=None)`
+* `@push2_python.on_touchstrip()`
+* `@push2_python.on_pad_pressed(pad_n=None, pad_ij=None)`
+* `@push2_python.on_pad_released(pad_n=None, pad_ij=None)`
+* `@push2_python.on_pad_aftertouch(pad_n=None, pad_ij=None)`
+* `@push2_python.on_encoder_rotated(encoder_name=None)`
+* `@push2_python.on_encoder_touched(encoder_name=None)`
+* `@push2_python.on_encoder_released(encoder_name=None)`
+
+Full documentation for each of these can be found in their docstrings [starting here](https://github.com/ffont/push2-python/blob/master/push2_python/__init__.py#L128). 
+Also have a look at the [code examples](#code-examples) below to get an immediate idea about how it works.
+
+
+### Button names, encoder names, pad numbers and coordinates
+
+Buttons and encoders can de identified by their name. You can get a list of avialable options for  `button_name` and `encoder_name` by checking the
+contents of [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py)
+or by using the following properties after intializing the `Push2` object:
+
+```python
+print(push.buttons.available_names)
+print(push.encoders.available_names)
+```
+
+Pads are identified either by their number (`pad_n`) or by their coordinates (`pad_ij`). Pad numbers correspond to the MIDI note numbers assigned
+to each pad as defined in [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) (see MIDI mapping diagram). Pad coordinates are specified as a `(i,j)` tuples where `(0,0)` corresponds to the top-left pad and `(7, 7)` corresponds to the bottom right pad.
+
+### Set pad and button colors
+
+Pad and button colors can be set using methods provided by the `Push2` object. For example you can set pad colors using the following code:
+
+```python
+push = push2_python.Push2() 
+pad_ij = (0, 3)  # Fourth pad of the top row
+push.pads.set_pad_color(pad_ij, 'green')
+```
+
+You set button colors in a similar way:
+
+```python
+push = push2_python.Push2() 
+push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green')
+```
+
+All pads support RGB colors, and some buttons do as well. However, some buttons only support black and white. Checkout the MIDI mapping diagram in the 
+[Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
+
+For a list of avilable RGB colors check the keys of the `RGB_COLORS` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). Similarly, black and white available colors are defined in the `BLACK_WHITE_COLORS` dictionary in the same file. You can list them in code like this:
+
+```python
+print(list(push2_python.constants.RGB_COLORS.keys()))
+print(list(push2_python.constants.BLACK_WHITE_COLORS.keys()))
+```
+
+**NOTE**: The Push 2 Interface Manual provides a way to configure custom color palettes which has not yet been implemented in `push2-python`. Also, only a limited number of colors is included here but many more are avilable in the default color palette.
+
+
+### Interface with the display
+
+You interface with Push2's display by senidng frames to be display using the `push.display.display_frame` method as follows:
+
+```python
+img_frame = ...  # Some existing valid img_frame
+push.display.display_frame(img_frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565)
+```
+
+`img_frame` is expected to by a `numpy` array. Depending on the `input_format` argument, `img_frame` will need to have the following characteristics:
+        
+* for `push2_python.constants.FRAME_FORMAT_BGR565`: `numpy` array of shape 910x160 and of type `uint16`. Each `uint16` element specifies rgb 
+    color with the following bit position meaning: `[b4 b3 b2 b1 b0 g5 g4 g3 g2 g1 g0 r4 r3 r2 r1 r0]`.
+
+* for `push2_python.constants.FRAME_FORMAT_RGB565`: `numpy` array of shape 910x160 and of type `uint16`. Each `uint16` element specifies rgb 
+    color with the following bit position meaning: `[r4 r3 r2 r1 r0 g5 g4 g3 g2 g1 g0 b4 b3 b2 b1 b0]`.
+
+* for `push2_python.constants.FRAME_FORMAT_RGB`: numpy array of shape 910x160x3 with the third dimension representing rgb colors
+    with separate float values for rgb channels (float values in range `[0.0, 1.0]`).
+
+The preferred format is `push2_python.constants.FRAME_FORMAT_BGR565` as it requires no conversion before sending to Push2 (that is the format that Push2 expects). Using `push2_python.constants.FRAME_FORMAT_BGR565` it should be possible to achieve frame rates as high as 36fps. 
+With `push2_python.constants.FRAME_FORMAT_RGB565` we need to convert the frame to `push2_python.constants.FRAME_FORMAT_BGR565` before sending to Push2. This will reduce frame rates to ~14fps (allways depending on the speed of your computer). Sending data in `push2_python.constants.FRAME_FORMAT_RGB` will result in very long frame conversion times that can take seconds. This format should only be used for displaying static images that are prepared offline using the `push.display.prepare_frame` method. The code examples below ([here](#interface-with-the-display-static-content) and [here](#interface-with-the-display-dynamic-content)) should give you an idea of how this works. It's easy!
+
+**NOTE 1**: According to Push2 display specification, when you send a frame to Push2, it will stay on screen for two seconds. Then the screen will go to black.
+
+**NOTE 2**: Interfacing with the display using `push2-python` won't allow you to get very high frame rates, but it should be enough for most applications. If you need to make more hardcore use of the display you should probably implement your own funcions directly in C or C++. Push2's display theoretically supports up to 60fps. More information in the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#32-display-interface-protocol).
 
 
 ## Code examples
 
-### Set up handlers for pads, encoders, buttons and the touchstrip...
+### Set up action handlers for pads, encoders, buttons and the touchstrip...
 
 ```python
 import push2_python
@@ -121,12 +222,12 @@ def on_button_released(push, button_name):
 @push2_python.on_pad_pressed()
 def on_pad_pressed(push, pad_n, pad_ij, velocity):
     # Set pressed pad color to green
-    push.pads.set_pad_color(pad_ij[0], pad_ij[1], 'green')
+    push.pads.set_pad_color(pad_ij, 'green')
 
 @push2_python.on_pad_released()
 def on_pad_released(push, pad_n, pad_ij, velocity):
     # Set released pad color back to white
-    push.pads.set_pad_color(pad_ij[0], pad_ij[1], 'white')
+    push.pads.set_pad_color(pad_ij, 'white')
 
 # Start infinite loop so the app keeps running
 print('App runnnig...')
