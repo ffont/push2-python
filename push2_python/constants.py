@@ -15,6 +15,7 @@ PUSH2_LIVE_PORT_NAME = 'Ableton Push 2 Live Port'
 MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off'
 MIDO_POLYAT = 'polytouch'
+MIDO_AFTERTOUCH = 'aftertouch'
 MIDI_PITCWHEEL = 'pitchwheel'
 MIDO_CONTROLCHANGE = 'control_change'
 
@@ -36,7 +37,6 @@ DISPLAY_FRAME_XOR_PATTERN = [0xE7F3, 0xE7FF] * (
 FRAME_FORMAT_BGR565 = 'bgr565'
 FRAME_FORMAT_RGB565 = 'rgb565'
 FRAME_FORMAT_RGB = 'rgb'
-
 
 # LED colors and anumations
 # NOTE: this is a subset of colors from the default palette
@@ -155,7 +155,6 @@ BUTTON_PAGE_LEFT = 'Page Left'
 BUTTON_PAGE_RIGHT = 'Page Right'
 BUTTON_SHIFT = 'Shift'
 BUTTON_SELECT = 'Select'
-
 
 # Push2 encoder names
 # NOTE: the list of encoder names is here to facilitate autocompletion when developing apps using push2_python package, but is not needed for the package

@@ -1,5 +1,6 @@
 import mido
-from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
+from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, \
+    MIDO_POLYAT, MIDO_AFTERTOUCH, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
 from .classes import AbstractPush2Section
 
 
@@ -110,7 +111,7 @@ class Push2Pads(AbstractPush2Section):
             if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
                 pad_n = message.note
                 pad_ij = self.pad_n_to_pad_ij(pad_n)
-                if message.type == MIDO_POLYAT:
+                if message.type == MIDO_POLYAT or message.type == MIDO_AFTERTOUCH:
                     velocity = message.value
                 else:
                     velocity = message.velocity
@@ -126,3 +127,6 @@ class Push2Pads(AbstractPush2Section):
                     self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)
                     self.push.trigger_action(get_individual_pad_action_name(
                         ACTION_PAD_AFTERTOUCH, pad_n=pad_n), velocity)  # Trigger individual pad action as well
+                elif message.type == MIDO_AFTERTOUCH:
+                    self.push.trigger_action(ACTION_PAD_AFTERTOUCH, None, None, velocity)
+
