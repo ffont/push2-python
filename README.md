@@ -48,11 +48,11 @@ import push2_python
 push = push2_python.Push2() 
 ```
 
-**NOTE**: all code snippets below assume you import `push2_python` and initialize the `Push2` like in the snipped above.
+**NOTE**: all code snippets below assume you import `push2_python` and initialize the `Push2` like in the snippet above.
 
 You can pass the optional argument `use_user_midi_port=True` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
 
-### Setting action handlers for buttons, encoders, pads and the touchstrip
+### Setting action handlers for buttons, encoders, pads and the touchstrip
 
 You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by **decorating functions** that will be triggered in response to the physical actions. For example, you can set up an action handler that will be triggered when
 the left-most encoder is rotated in this way:
