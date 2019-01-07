@@ -121,7 +121,7 @@ push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green')
 All pads support RGB colors, and some buttons do as well. However, some buttons only support black and white. Checkout the MIDI mapping diagram in the 
 [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
 
-For a list of avilable RGB colors check the keys of the `RGB_COLORS` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). Similarly, black and white available colors are defined in the `BLACK_WHITE_COLORS` dictionary in the same file. You can list them in code like this:
+For a list of avilable RGB colors check the keys of the `RGB_COLORS` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). Similarly, black and white available colors are defined in the `BLACK_WHITE_COLORS` dictionary in the same file. You can also list available colors in code like this:
 
 ```python
 print(list(push2_python.constants.RGB_COLORS.keys()))
@@ -151,7 +151,7 @@ push.display.display_frame(img_frame, input_format=push2_python.constants.FRAME_
 * for `push2_python.constants.FRAME_FORMAT_RGB`: numpy array of shape 910x160x3 with the third dimension representing rgb colors
     with separate float values for rgb channels (float values in range `[0.0, 1.0]`).
 
-The preferred format is `push2_python.constants.FRAME_FORMAT_BGR565` as it requires no conversion before sending to Push2 (that is the format that Push2 expects). Using `push2_python.constants.FRAME_FORMAT_BGR565` it should be possible to achieve frame rates as high as 36fps. 
+The preferred format is `push2_python.constants.FRAME_FORMAT_BGR565` as it requires no conversion before sending to Push2 (that is the format that Push2 expects). Using `push2_python.constants.FRAME_FORMAT_BGR565` it should be possible to achieve frame rates of more than 36fps (depending on the speed of your computer). 
 With `push2_python.constants.FRAME_FORMAT_RGB565` we need to convert the frame to `push2_python.constants.FRAME_FORMAT_BGR565` before sending to Push2. This will reduce frame rates to ~14fps (allways depending on the speed of your computer). Sending data in `push2_python.constants.FRAME_FORMAT_RGB` will result in very long frame conversion times that can take seconds. This format should only be used for displaying static images that are prepared offline using the `push.display.prepare_frame` method. The code examples below ([here](#interface-with-the-display-static-content) and [here](#interface-with-the-display-dynamic-content)) should give you an idea of how this works. It's easy!
 
 **NOTE 1**: According to Push2 display specification, when you send a frame to Push2, it will stay on screen for two seconds. Then the screen will go to black.
