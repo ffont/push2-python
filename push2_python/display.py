@@ -95,8 +95,10 @@ class Push2Display(AbstractPush2Section):
         if usb_device is None:
             raise Push2USBDeviceNotFound
 
-        usb_device.set_configuration()
         device_configuration = usb_device.get_active_configuration()
+        if device_configuration is None:
+            usb_device.set_configuration()
+
         interface = device_configuration[(0, 0)]
         out_endpoint = usb.util.find_descriptor(
             interface,
@@ -112,22 +114,22 @@ class Push2Display(AbstractPush2Section):
     def prepare_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         """Prepare the given image frame to be shown in the Push2's display.
         Depending on the input_format argument, "frame" must be a numpy array with the following characteristics:
-        
-        * for FRAME_FORMAT_BGR565: numpy array of shape 910x160 and of uint16. Each uint16 element specifies rgb 
+
+        * for FRAME_FORMAT_BGR565: numpy array of shape 910x160 and of uint16. Each uint16 element specifies rgb
           color with the following bit position meaning: [b4 b3 b2 b1 b0 g5 g4 g3 g2 g1 g0 r4 r3 r2 r1 r0].
 
-        * for FRAME_FORMAT_RGB565: numpy array of shape 910x160 and of uint16. Each uint16 element specifies rgb 
+        * for FRAME_FORMAT_RGB565: numpy array of shape 910x160 and of uint16. Each uint16 element specifies rgb
           color with the following bit position meaning: [r4 r3 r2 r1 r0 g5 g4 g3 g2 g1 g0 b4 b3 b2 b1 b0].
-        
+
         * for FRAME_FORMAT_RGB: numpy array of shape 910x160x3 with the third dimension representing rgb colors
           with separate float values for rgb channels (float values in range [0.0, 1.0]).
-        
-        Preferred format is brg565 as it requires no conversion before sending to Push2. Using brg565 it should be 
-        possible to achieve frame rates as high as 36fps. With rgb565 the conversion slows down the process but should 
-        still allow frame rates of 14fps. Sending data in rgb will result in very long frame preparation times that can 
-        take seconds. Therefore rgb format should only be used for displaying static images that are prepared offline. 
+
+        Preferred format is brg565 as it requires no conversion before sending to Push2. Using brg565 it should be
+        possible to achieve frame rates as high as 36fps. With rgb565 the conversion slows down the process but should
+        still allow frame rates of 14fps. Sending data in rgb will result in very long frame preparation times that can
+        take seconds. Therefore rgb format should only be used for displaying static images that are prepared offline.
         "prepare_frame" method expects numpy array elements to be big endian.
-        In addition to format changing (if needed), "prepare_frame" prepares the frame to be sent to push by adding 
+        In addition to format changing (if needed), "prepare_frame" prepares the frame to be sent to push by adding
         filler bytes and performing bitwise XOR as decribed in the Push2 specification.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#326-allocating-libusb-transfers
         """
@@ -159,7 +161,7 @@ class Push2Display(AbstractPush2Section):
             pass  # Nothing as conversion was done before
         prepared_frame = prepared_frame.byteswap()  # Change to little endian
         prepared_frame = numpy.bitwise_xor(prepared_frame, NP_DISPLAY_FRAME_XOR_PATTERN)
-        
+
         self.last_prepared_frame = prepared_frame
         return prepared_frame.byteswap().tobytes()
 
