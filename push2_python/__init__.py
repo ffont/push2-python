@@ -32,7 +32,7 @@ class Push2(object):
     buttons = None
     encoders = None
     touchtrip = None
-    
+
 
     def __init__(self, use_user_midi_port=False):
         """Initializes object to interface with Ableton's Push2.
@@ -112,11 +112,11 @@ def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None, encod
             action = get_individual_button_action_name(action_name, button_name)
         if action_name in [ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH] and (pad_n is not None or pad_ij is not None):
             # If the action is pressing, releasing or aftertouching a pad and a spcific pad number or
-            # pad ij coordinates are given name was given, include the pad name or cordinate in the 
+            # pad ij coordinates are given name was given, include the pad name or cordinate in the
             # action name so that it can be triggered individually
             action = get_individual_pad_action_name(action_name, pad_n=pad_n, pad_ij=pad_ij)
         if action_name in [ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED] and encoder_name is not None:
-            # If the action is rotating, touching or releasing a rotatory encoder and a specific encoder 
+            # If the action is rotating, touching or releasing a rotatory encoder and a specific encoder
             # name is given, include the encoder name in the action name so that it can be triggered individually
             action = get_individual_encoder_action_name(action_name, encoder_name=encoder_name)
         logging.debug('Registered handler {0} for action {1}'.format(func, action))
@@ -128,11 +128,11 @@ def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None, encod
 def on_button_pressed(button_name=None):
     """Shortcut for registering handlers for ACTION_BUTTON_PRESSED events.
     Optional "button_name" argument is to link the handler to a specific button.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Button name (string, only if button name not specified in decorator)
-    
+
     Examples:
 
     @push2_python.on_button_pressed()
@@ -149,11 +149,11 @@ def on_button_pressed(button_name=None):
 def on_button_released(button_name=None):
     """Shortcut for registering handlers for ACTION_BUTTON_RELEASED events.
     Optional "button_name" argument is to link the handler to a specific button.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Button name (string, only if button name not specified in decorator)
-    
+
    Examples:
 
     @push2_python.on_button_released()
@@ -169,11 +169,11 @@ def on_button_released(button_name=None):
 
 def on_touchstrip():
     """Shortcut for registering handlers for ACTION_TOUCHSTRIP_TOUCHED events.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Touchstrip value (int)
-    
+
     Examples:
 
     @push2_python.on_touchstrip()
@@ -186,13 +186,13 @@ def on_touchstrip():
 def on_pad_pressed(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_PRESSED events.
     Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Pad number (int, only if pad not specified in decorator)
         * Pad ij coordinates (tuple, only if pad not specified in decorator)
         * Velocity value (int 0-127)
-    
+
     Examples:
 
     @push2_python.on_pad_pressed()
@@ -213,13 +213,13 @@ def on_pad_pressed(pad_n=None, pad_ij=None):
 def on_pad_released(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_RELEASED events.
     Optional "pad_n" or "pad_ij" arguments are to link the handler to a specific pad.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Pad number (int, only if pad not specified in decorator)
         * Pad ij coordinates (tuple, only if pad not specified in decorator)
         * Release velocity value (int 0-127)
-    
+
     Examples:
 
     @push2_python.on_pad_released()
@@ -239,19 +239,19 @@ def on_pad_released(pad_n=None, pad_ij=None):
 
 def on_pad_aftertouch(pad_n=None, pad_ij=None):
     """Shortcut for registering handlers for ACTION_PAD_AFTERTOUCH events. This can
-    work in "channel aftertouch" (cAT) or "polyphonic aftertouch" (polyAT) modes, which 
+    work in "channel aftertouch" (cAT) or "polyphonic aftertouch" (polyAT) modes, which
     are configured using "set_polyphonic_aftertouch" or "set_channel_aftertouch" methods
-    in Push2.pads. cAT mode is enabled by default. In polyAT mode Push will send individual 
-    aftertouch data for each pad, while in cAT mode aftertouch value will be shared for 
+    in Push2.pads. cAT mode is enabled by default. In polyAT mode Push will send individual
+    aftertouch data for each pad, while in cAT mode aftertouch value will be shared for
     all pads. In polyAT mode, optional "pad_n" or "pad_ij" arguments can be passed to the
     decorator to link the handler to a specific pad adftertouch action.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Pad number (int, only if pad not specified in decorator, will be none in cAT mode)
         * Pad ij position (tuple, only if pad not specified in decorator, will be none in cAT mode)
         * Aftertouch value (int 0-127)
-    
+
     Examples:
 
     @push2_python.on_pad_aftertouch()
@@ -275,12 +275,12 @@ def on_pad_aftertouch(pad_n=None, pad_ij=None):
 def on_encoder_rotated(encoder_name=None):
     """Shortcut for registering handlers for ACTION_ENCODER_ROTATED events.
     Optional "encoder_name" argument is to link the handler to a specific encoder.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Encoder name (string, only if pad not specified in decorator)
         * Encoder increment (int, 1 for clockwise rotation and -1 for counter-clockwise)
-    
+
     Examples:
 
     @push2_python.on_encoder_rotated()
@@ -297,11 +297,11 @@ def on_encoder_rotated(encoder_name=None):
 def on_encoder_touched(encoder_name=None):
     """Shortcut for registering handlers for ACTION_ENCODER_TOUCHED events.
     Optional "encoder_name" argument is to link the handler to a specific encoder.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Encoder name (string, only if pad not specified in decorator)
-    
+
     Examples:
 
     @push2_python.on_encoder_touched()
@@ -318,11 +318,11 @@ def on_encoder_touched(encoder_name=None):
 def on_encoder_released(encoder_name=None):
     """Shortcut for registering handlers for ACTION_ENCODER_RELEASED events.
     Optional "encoder_name" argument is to link the handler to a specific encoder.
-    Functions decorated with this decorator will be called with the following positional 
+    Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance
         * Encoder name (string, only if pad not specified in decorator)
-    
+
     Examples:
 
     @push2_python.on_encoder_released()

@@ -93,7 +93,7 @@ class Push2Pads(AbstractPush2Section):
         color_matrix = [[color for _ in range(0, 8)] for _ in range(0, 8)]
         animation_matrix = [[animation for _ in range(0, 8)] for _ in range(0, 8)]
         self.set_pads_color(color_matrix, animation_matrix)
-    
+
     def set_all_pads_to_white(self, animation='static'):
         self.set_all_pads_to_color('white', animation=animation)
 
@@ -115,7 +115,7 @@ class Push2Pads(AbstractPush2Section):
                     velocity = message.value
                 else:
                     velocity = message.velocity
-                if message.type == MIDO_NOTEON:   
+                if message.type == MIDO_NOTEON:
                     self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)  # Trigger generic pad action
                     self.push.trigger_action(get_individual_pad_action_name(
                         ACTION_PAD_PRESSED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
@@ -129,4 +129,3 @@ class Push2Pads(AbstractPush2Section):
                         ACTION_PAD_AFTERTOUCH, pad_n=pad_n), velocity)  # Trigger individual pad action as well
                 elif message.type == MIDO_AFTERTOUCH:
                     self.push.trigger_action(ACTION_PAD_AFTERTOUCH, None, None, velocity)
-
