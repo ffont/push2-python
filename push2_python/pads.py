@@ -36,6 +36,9 @@ class Push2Pads(AbstractPush2Section):
     See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#Pads
     """
 
+    current_pads_state = dict()
+
+
     def set_polyphonic_aftertouch(self):
         """Set pad aftertouch mode to polyphonic aftertouch
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
@@ -56,16 +59,24 @@ class Push2Pads(AbstractPush2Section):
     def pad_n_to_pad_ij(self, n):
         return pad_n_to_pad_ij(n)
 
-    def set_pad_color(self, pad_ij, color='white', animation='static'):
+    def set_pad_color(self, pad_ij, color='white', animation='static', optimize_num_messages=True):
         """Sets the color of the pad at the (i,j) coordinate.
-        Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        'color' must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        'animation' must be an existing key of push2_python.contants.ANIMATIONS dictionary.
+        This funtion will keep track of the latest color/animation values set for each specific pad. If 'optimize_num_messages' is 
+        set to True, set_pad_color will only actually send the MIDI message to push if either the color or animation that should 
+        be set differ from those stored in the state.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
         pad = self.pad_ij_to_pad_n(pad_ij[0], pad_ij[1])
         color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
+        if optimize_num_messages and pad in self.current_pads_state and self.current_pads_state[pad]['color'] == color and self.current_pads_state[pad]['animation'] == animation:
+            # If pad's recorded state already has the specified color and animation, return method before sending the MIDI message
+            return
         msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=animation)
         self.push.send_midi_to_push(msg)
+        self.current_pads_state[pad] = {'color': color, 'animation': animation}
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
