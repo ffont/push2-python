@@ -11,54 +11,24 @@ from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT
 NP_DISPLAY_FRAME_XOR_PATTERN = numpy.array(DISPLAY_FRAME_XOR_PATTERN, dtype=numpy.uint16)  # Numpy array version of the constant
 
 
-# Utils for image format processing
+def rgb565_to_bgr565(rgb565_frame):
+    r_filter = int('1111100000000000', 2)
+    g_filter = int('0000011111100000', 2)
+    b_filter = int('0000000000011111', 2)
+    frame_r_filtered = numpy.bitwise_and(rgb565_frame, r_filter)
+    frame_r_shifted = numpy.right_shift(frame_r_filtered, 11)  # Shift bits so R compoenent goes to the right
+    frame_g_filtered = numpy.bitwise_and(rgb565_frame, g_filter)
+    frame_g_shifted = frame_g_filtered  # No need to shift green, it stays in the same position
+    frame_b_filtered = numpy.bitwise_and(rgb565_frame, b_filter)
+    frame_b_shifted = numpy.left_shift(frame_b_filtered, 11)  # Shift bits so B compoenent goes to the left
+    return frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
 
-def get_bit(value, n):
-    """Get bit value at binary position from value"""
-    return ((value >> n & 1) != 0)
-
-def set_bit(value, n):
-    """Set bit to True at given binary position in value"""
-    return value | (1 << n)
-
-def build_rgb565_to_bgr565_map():
-    """Creates a dictionary with 2^16 items to allow easy conversion from rgb565 format to bgr565 format"""
-    rgb565_to_bgr565_map = dict()
-    rgb565_to_bgr565_bit_shifting_table = (
-        (0, 11),  # r 1
-        (1, 12),  # r 2
-        (2, 13),  # r 3
-        (3, 14),  # r 4
-        (4, 15),  # r 5
-        (11, 0),  # b 1
-        (12, 1),  # b 2
-        (13, 2),  # b 3
-        (14, 3),  # b 4
-        (15, 4),  # b 5
-        (5, 5),   # g 1
-        (6, 6),   # g 2
-        (7, 7),   # g 3
-        (8, 8),   # g 4
-        (9, 9),   # g 5
-        (10, 10),  # g 6
-    )
-    for rgb565_value in range(0, pow(2, 16)):
-        bgr565_value = 0
-        for i, j in rgb565_to_bgr565_bit_shifting_table:
-            if get_bit(rgb565_value, i):
-                bgr565_value = set_bit(bgr565_value, j)
-        rgb565_to_bgr565_map[rgb565_value] = int(bgr565_value)
-    return rgb565_to_bgr565_map
-
-# Vectorized function to convert from rgb565 to bgr565
-rgb565_to_bgr565_map = build_rgb565_to_bgr565_map()
-rgb565_to_bgr565_vecotrized = numpy.vectorize(
-    lambda x: rgb565_to_bgr565_map[x], otypes=[numpy.uint16])
 
 # Non-vectorized function for converting from rgb to bgr565
 def rgb_to_bgr565(rgb_frame):
     # RGB is defined here as an 2d array with (r, g, b) tuples with values between [0.0, 1.0]
-    # NOTE: this is really slow, should only be used offline
+    # TODO: this is really slow, there are other ways to do this simple (similar to rgb565_to_bgr565)
+    # which will work as well super fast. Need to implement that
     out_array = numpy.zeros(shape=(rgb_frame.shape[1], rgb_frame.shape[0]), dtype=numpy.uint16)
     for i in range(0, rgb_frame.shape[0]):
         for j in range(0, rgb_frame.shape[1]):
@@ -124,12 +94,12 @@ class Push2Display(AbstractPush2Section):
         * for FRAME_FORMAT_RGB: numpy array of shape 910x160x3 with the third dimension representing rgb colors
           with separate float values for rgb channels (float values in range [0.0, 1.0]).
 
-        Preferred format is brg565 as it requires no conversion before sending to Push2. Using brg565 it should be
-        possible to achieve frame rates as high as 36fps. With rgb565 the conversion slows down the process but should
-        still allow frame rates of 14fps. Sending data in rgb will result in very long frame preparation times that can
-        take seconds. Therefore rgb format should only be used for displaying static images that are prepared offline.
-        "prepare_frame" method expects numpy array elements to be big endian.
-        In addition to format changing (if needed), "prepare_frame" prepares the frame to be sent to push by adding
+        Preferred format is brg565 as it requires no conversion before sending to Push2. Using brg565 is also very fast
+        as color conversion is required but numpy handles it pretty well. You should be able to get frame rates higher than
+        30 fps, depending on the speed of your computer. However, using the rgb format (FRAME_FORMAT_RGB) will result in very 
+        long frame preparation times that can take seconds. This can be highgly optimized so it is as fast as the other formats
+        but currently the library does not handle this format as nively. All numpy array elements are expected to be big endian.
+        In addition to format conversion (if needed), "prepare_frame" prepares the frame to be sent to push by adding
         filler bytes and performing bitwise XOR as decribed in the Push2 specification.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#326-allocating-libusb-transfers
         """
@@ -154,7 +124,7 @@ class Push2Display(AbstractPush2Section):
         prepared_frame[0:frame.shape[0], 0:frame.shape[1]] = frame
         prepared_frame = prepared_frame.transpose().flatten()
         if input_format == FRAME_FORMAT_RGB565:
-            prepared_frame = rgb565_to_bgr565_vecotrized(prepared_frame)
+            prepared_frame = rgb565_to_bgr565(prepared_frame)
         elif input_format == FRAME_FORMAT_BGR565:
             pass  # Nothing to do as this is already the requested format
         elif input_format == FRAME_FORMAT_RGB:
