@@ -17,7 +17,8 @@ from .touchstrip import Push2TouchStrip
 from .push2_map import push2_map
 from .constants import is_push_midi_in_port_name, is_push_midi_out_port_name, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
-    ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED, PUSH2_RECONNECT_INTERVAL
+    ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED, PUSH2_RECONNECT_INTERVAL, ACTION_DISPLAY_CONNECTED, \
+    ACTION_DISPLAY_DISCONNECTED, ACTION_MIDI_CONNECTED, ACTION_MIDI_DISCONNECTED, PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
@@ -37,6 +38,7 @@ class Push2(object):
     encoders = None
     touchtrip = None
     use_user_midi_port = False
+    last_active_sensing_received = None
 
 
     def __init__(self, use_user_midi_port=False):
@@ -71,6 +73,33 @@ class Push2(object):
         # these will be lazily initialized when required (i.e., when attempting to send MIDI to push
         # or attempting to use the display)
 
+        # Start thread that will continuously check whether the last "active sensing" MIDI message from
+        # push was received. If active sensing messages stop, will set midi ports to None and trigger
+        # a "midi disconnected" action
+        def check_active_sensing(f_stop):
+            if self.last_active_sensing_received is not None:
+                if time.time() - self.last_active_sensing_received > PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL:
+                    '''
+                    # Don't set midi port connections to None because if these were ever initialized, will remain
+                    # active once Push2 MIDI comes back (e.g. after Push2 reset) and we will start receiving again
+                    # active sensing messages (and will be able to re-trigger "push midi connected" message without
+                    # actively continuously checking for MIDI connection using some sort of polling strategy.
+                    if self.midi_is_configured():
+                        if self.midi_in_port is not None:
+                            self.midi_in_port.close()
+                            self.midi_in_port = None
+                        if self.midi_out_port is not None:
+                            self.midi_out_port.close()
+                            self.midi_out_port = None
+                    '''
+                    self.trigger_action(ACTION_MIDI_DISCONNECTED)
+                    self.last_active_sensing_received = None
+            if not f_stop.is_set():
+                threading.Timer(0.3, check_active_sensing, [f_stop]).start()  # Run this check every 300 ms
+
+        f_stop = threading.Event()
+        check_active_sensing(f_stop)
+
 
     def trigger_action(self, *args, **kwargs):
         action_name = args[0]
@@ -82,7 +111,7 @@ class Push2(object):
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
 
-    @function_call_interval_limit(2)
+    @function_call_interval_limit(PUSH2_RECONNECT_INTERVAL)
     def configure_midi(self):
         try:
             self.configure_midi_out()
@@ -108,6 +137,9 @@ class Push2(object):
                 
             try:
                 self.midi_in_port = mido.open_input(port_name_to_use)
+                # Disable Active Sense message filtering so we can receive those messages comming from Push and
+                # detect if Push MIDI gets disconnected
+                self.midi_in_port._rt.ignore_types(False, False, False)
                 self.midi_in_port.callback = self.on_midi_message
             except OSError as e:
                 raise Push2MIDIeviceNotFound
@@ -151,10 +183,24 @@ class Push2(object):
         """Handle incomming MIDI messages from Push.
         Call `on_midi_nessage` for each individual section.
         """
-        self.pads.on_midi_message(message)
-        self.buttons.on_midi_message(message)
-        self.encoders.on_midi_message(message)
-        self.touchtrip.on_midi_message(message)
+        current_time = time.time()
+        if (message.type == "active_sensing"):
+            active_sensing_was_none = self.last_active_sensing_received is None
+            self.last_active_sensing_received = current_time
+            if active_sensing_was_none:
+                # Means this is first active_sensing received message (possibly after Push2 restart) and therefore initial MIDI setup (if any) should be done
+                self.pads.reset_current_pads_state()  # Reset stored pads state (if any) to avoid messages not being sent because of state
+                self.trigger_action(ACTION_MIDI_CONNECTED)
+                self.last_action_midi_connection_action_triggered = current_time
+        else:
+            if self.last_active_sensing_received is not None and current_time - self.last_action_midi_connection_action_triggered > 1:
+                # Right after first "active sensing" message is received (which means MIDI IN conneciton with Push is properly set),
+                # ignore the next 1 second of MIDI in messages as for some reason these include a burst of messages from Push which we 
+                # are not interested in (probably some internal state which Ableton uses but we don't care about?)
+                self.pads.on_midi_message(message)
+                self.buttons.on_midi_message(message)
+                self.encoders.on_midi_message(message)
+                self.touchtrip.on_midi_message(message)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
@@ -163,7 +209,6 @@ class Push2(object):
         """Returns True if communication with Push2 display is properly configured, False otherwise
         """
         return self.display is not None and self.display.usb_endpoint is not None
-
 
 
 def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None, encoder_name=None):
@@ -401,3 +446,19 @@ def on_encoder_released(encoder_name=None):
         print('Encoder for Track 1 released')
     """
     return action_handler(ACTION_ENCODER_RELEASED, encoder_name=encoder_name)
+
+
+def on_display_connected():
+    return action_handler(ACTION_DISPLAY_CONNECTED)
+
+
+def on_display_disconnected():
+    return action_handler(ACTION_DISPLAY_DISCONNECTED)
+
+
+def on_midi_connected():
+    return action_handler(ACTION_MIDI_CONNECTED)
+
+
+def on_midi_disconnected():
+    return action_handler(ACTION_MIDI_DISCONNECTED)

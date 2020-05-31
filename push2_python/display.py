@@ -7,7 +7,8 @@ from .classes import AbstractPush2Section, function_call_interval_limit
 from .exceptions import Push2USBDeviceConfigurationError, Push2USBDeviceNotFound
 from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT, DISPLAY_FRAME_HEADER, \
     DISPLAY_BUFFER_SIZE, DISPLAY_FRAME_XOR_PATTERN, DISPLAY_N_LINES, DISPLAY_LINE_PIXELS, DISPLAY_LINE_FILLER_BYTES, \
-    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB, PUSH2_RECONNECT_INTERVAL
+    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB, PUSH2_RECONNECT_INTERVAL, ACTION_DISPLAY_CONNECTED, \
+    ACTION_DISPLAY_DISCONNECTED
 
 NP_DISPLAY_FRAME_XOR_PATTERN = numpy.array(DISPLAY_FRAME_XOR_PATTERN, dtype=numpy.uint16)  # Numpy array version of the constant
 
@@ -52,7 +53,7 @@ class Push2Display(AbstractPush2Section):
     last_prepared_frame = None
 
 
-    @function_call_interval_limit(2)
+    @function_call_interval_limit(PUSH2_RECONNECT_INTERVAL)
     def configure_usb_device(self):
         """Connect to Push2 USB device and get the Endpoint object used to send data
         to Push2's display.
@@ -82,9 +83,20 @@ class Push2Display(AbstractPush2Section):
         if out_endpoint is None:
             raise Push2USBDeviceConfigurationError
 
+        try:
+            # Try sending a framr header as a test...
+            out_endpoint.write(DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
+            black_frame = self.prepare_frame(numpy.zeros((DISPLAY_LINE_PIXELS, DISPLAY_N_LINES), dtype=numpy.uint16), input_format=FRAME_FORMAT_BGR565)
+            out_endpoint.write(black_frame, USB_TRANSFER_TIMEOUT)
+        except usb.core.USBError:
+            self.usb_endpoint = None
+            return
+        
+        # ...if it works (no USBError exception) set self.usb_endpoint and trigger action
         self.usb_endpoint = out_endpoint
-
-
+        self.push.trigger_action(ACTION_DISPLAY_CONNECTED)            
+        
+            
     def prepare_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         """Prepare the given image frame to be shown in the Push2's display.
         Depending on the input_format argument, "frame" must be a numpy array with the following characteristics:
@@ -160,13 +172,17 @@ class Push2Display(AbstractPush2Section):
                     DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
 
                 self.usb_endpoint.write(prepared_frame, USB_TRANSFER_TIMEOUT)
-                for i in range(0, len(prepared_frame), DISPLAY_BUFFER_SIZE):
-                    buffer_data = prepared_frame[i: i + DISPLAY_BUFFER_SIZE]
-                    self.usb_endpoint.write(buffer_data, USB_TRANSFER_TIMEOUT)
+
+                # NOTE: code below was commented because the frames were apparently being
+                # sent twice!! (nice bug...). There seems to be no need to send frame in chunks...
+                #for i in range(0, len(prepared_frame), DISPLAY_BUFFER_SIZE):
+                #    buffer_data = prepared_frame[i: i + DISPLAY_BUFFER_SIZE]
+                #    self.usb_endpoint.write(buffer_data, USB_TRANSFER_TIMEOUT)
             
             except usb.core.USBError:
                 # USB connection error, disable connection, will try to reconnect next time a frame is sent
                 self.usb_endpoint = None
+                self.push.trigger_action(ACTION_DISPLAY_DISCONNECTED)
                 
 
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):

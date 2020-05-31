@@ -58,6 +58,7 @@ def is_push_midi_out_port_name(port_name, use_user_port=False):
 
 
 PUSH2_RECONNECT_INTERVAL = 2  # 2 seconds
+PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL = 0.5  # 0.5 seconds
 
 MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off'
@@ -129,6 +130,10 @@ ACTION_BUTTON_RELEASED = 'on_button_released'
 ACTION_ENCODER_ROTATED = 'on_encoder_rotated'
 ACTION_ENCODER_TOUCHED = 'on_encoder_touched'
 ACTION_ENCODER_RELEASED = 'on_encoder_released'
+ACTION_DISPLAY_CONNECTED = 'on_display_connected'
+ACTION_DISPLAY_DISCONNECTED = 'on_display_disconnected'
+ACTION_MIDI_CONNECTED = 'on_midi_connected'
+ACTION_MIDI_DISCONNECTED = 'on_midi_disconnected'
 
 # Push2 button names
 # NOTE: the list of button names is here to facilitate autocompletion when developing apps using push2_python package, but is not needed for the package
