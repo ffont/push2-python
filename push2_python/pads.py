@@ -125,7 +125,7 @@ class Push2Pads(AbstractPush2Section):
         self.set_all_pads_to_color('blue', animation=animation)
 
     def on_midi_message(self, message):
-        if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT]:
+        if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, MIDO_AFTERTOUCH]:
             if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
                 pad_n = message.note
                 pad_ij = self.pad_n_to_pad_ij(pad_n)
