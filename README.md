@@ -6,7 +6,7 @@ These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://
 
 So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
 
-I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux.
+I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. ~~It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux~~. **UPDATE**: MIDI port names should now be cross-platform, but I have not tested them on Linux/Windows.
 
 
 ## Table of Contents
@@ -41,16 +41,42 @@ Well, to be honest there is no proper documentation. However the use of this pac
 
 ### Initializing Push
  
- To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
+To interface with Push2 you'll first need to import `push2_python` and initialize a Python object as follows:
 
 ```python
 import push2_python
+
 push = push2_python.Push2() 
 ```
 
 **NOTE**: all code snippets below assume you import `push2_python` and initialize the `Push2` like in the snippet above.
 
 You can pass the optional argument `use_user_midi_port=True` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
+
+When `push2_python.Push2()` is run, `push2_python` tries to set up MIDI in connection with Push2 so it can start receiving incomming MIDI in messages (e.g. if a pad is pressed). MIDI out connection and display connection are lazily configured the first time a frame is sent to the display or a MIDI message is sent to Push2 (e.g. to light a pad). If `push2_python.Push2()` is run while Push2 is powered off, it won't be able to automatically detect when it is powered on to automatically configure connection. Nevertheless, if a frame is sent to Push2's display or any MIDI message is sent after it has been powered on, then configuration will happen automatically and should work as expected. For the specific case of MIDI connection, after a connection has been first set up then `push2_python` will be able to detect when Push2 gets powered off and on by tracking *active sense* messages sent by Push2. In summary, if you want to build an app that can automatically connect to Push2 when it becomes available and/or recover from Push2 temporarily being unavailable we recommend that you have some sort of main loop that keeps trying to send frames to Push2 display (if you want to make use of the display) and/or keeps trying to send a MIDI message to Push2. As an example:
+
+```python
+import time
+import push2_python
+
+push = push2_python.Push2()  # Call this while Push2 is still powered off
+while True:  # This is your app's main loop
+   
+   # Try to send some frame to Push2 display to force display connection/reconnection
+   frame = generate_frame_for_push_display()  # Some fake function to do that
+   push.display.display_frame(frame)
+   
+   # Try to light a button to force MIDI connection/reconnection
+   if not push.midi_is_configured():
+      push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
+   
+   time.sleep(0.1)
+```
+
+**NOTE**: This calls must be done from your app's main thread (where `push2_python.Push2()` is run). Maybe it is possible
+to delegate all connection with `push2_python` to a different thread (have not tried that), but it is important that all
+MIDI configuration calls happen in the same thread because of limitations of the `mido` Python MIDI package used by `push2_python`.
+
 
 ### Setting action handlers for buttons, encoders, pads and the touchstrip
 
@@ -82,6 +108,10 @@ These are all available decorators for setting up action handlers:
 * `@push2_python.on_encoder_rotated(encoder_name=None)`
 * `@push2_python.on_encoder_touched(encoder_name=None)`
 * `@push2_python.on_encoder_released(encoder_name=None)`
+* `@push2_python.on_display_connected()`
+* `@push2_python.on_display_disconnected()`
+* `@push2_python.on_midi_connected()`
+* `@push2_python.on_midi_disconnected()`
 
 Full documentation for each of these can be found in their docstrings [starting here](https://github.com/ffont/push2-python/blob/master/push2_python/__init__.py#L128). 
 Also have a look at the [code examples](#code-examples) below to get an immediate idea about how it works.
