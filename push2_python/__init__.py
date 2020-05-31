@@ -449,16 +449,60 @@ def on_encoder_released(encoder_name=None):
 
 
 def on_display_connected():
+    """Shortcut for registering handlers for ACTION_DISPLAY_CONNECTED events.
+    Functions decorated with this decorator will be called when push2-python successfully connects
+    with the Push2 display and will have the following positional arguments:
+        * Push2 object instance
+
+    Examples:
+
+    @push2_python.on_display_connected()
+    def function(push):
+        print('Display is ready to receive frames')
+    """
     return action_handler(ACTION_DISPLAY_CONNECTED)
 
 
 def on_display_disconnected():
+    """Shortcut for registering handlers for ACTION_DISPLAY_DISCONNECTED events.
+    Functions decorated with this decorator will be called when push2-python loses connection with the Push2 
+    display. It will have the following positional arguments:
+        * Push2 object instance
+
+    Examples:
+
+    @push2_python.on_display_disconnected()
+    def function(push):
+        print('Connection with Push2 display was just lost!')
+    """
     return action_handler(ACTION_DISPLAY_DISCONNECTED)
 
 
 def on_midi_connected():
+    """Shortcut for registering handlers for ACTION_MIDI_CONNECTED events.
+    Functions decorated with this decorator will be called when push2-python successfully connects
+    with Push2 MIDI devices and will have the following positional arguments:
+        * Push2 object instance
+
+    Examples:
+
+    @push2_python.on_midi_connected()
+    def function(push):
+        print('Push is ready to send and receive MIDI messages (set pad colors, buttons, advanced configuration, etc...)')
+    """
     return action_handler(ACTION_MIDI_CONNECTED)
 
 
 def on_midi_disconnected():
+    """Shortcut for registering handlers for ACTION_MIDI_DISCONNECTED events.
+    Functions decorated with this decorator will be called when push2-python loses MIDI connection with Push2.
+    It will have the following positional arguments:
+        * Push2 object instance
+
+    Examples:
+
+    @push2_python.on_midi_disconnected()
+    def function(push):
+        print('MIDI connection to push was just lost!')
+    """
     return action_handler(ACTION_MIDI_DISCONNECTED)
