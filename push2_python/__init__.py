@@ -3,7 +3,11 @@ import usb.util
 import logging
 import sys
 import mido
+import threading
+import time
+from datetime import timedelta
 from collections import defaultdict
+from .classes import function_call_interval_limit
 from .exceptions import Push2USBDeviceNotFound, Push2USBDeviceConfigurationError, Push2MIDIeviceNotFound
 from .display import Push2Display
 from .pads import Push2Pads, get_individual_pad_action_name
@@ -11,9 +15,9 @@ from .buttons import Push2Buttons, get_individual_button_action_name
 from .encoders import Push2Encoders, get_individual_encoder_action_name
 from .touchstrip import Push2TouchStrip
 from .push2_map import push2_map
-from .constants import PUSH2_USER_PORT_NAME, PUSH2_LIVE_PORT_NAME, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
+from .constants import is_push_midi_in_port_name, is_push_midi_out_port_name, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
-    ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED
+    ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED, PUSH2_RECONNECT_INTERVAL
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
@@ -32,9 +36,10 @@ class Push2(object):
     buttons = None
     encoders = None
     touchtrip = None
+    use_user_midi_port = False
 
 
-    def __init__(self, use_user_midi_port=False, push_midi_port_name=None):
+    def __init__(self, use_user_midi_port=False):
         """Initializes object to interface with Ableton's Push2.
         This function will set up USB and MIDI connections with the hardware device.
         By default, MIDI connection will use LIVE MIDI port instead of USER MIDI port.
@@ -43,29 +48,29 @@ class Push2(object):
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc
         """
 
+        self.use_user_midi_port = use_user_midi_port
+
         # Load Push2 map from JSON file provided in Push2's interface doc
         # https://github.com/Ableton/push-interface/blob/master/doc/Push2-map.json
         self.push2_map = push2_map
-
-        # Init Display
-        self.display = Push2Display(self)
-        try:
-            self.display.configure_usb_device()
-        except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
-            logging.error('Could not initialize Push 2 Display: {0}'.format(e))
-
-        # Configure MIDI ports
-        try:
-            self.configure_midi_ports(use_user_midi_port=use_user_midi_port, push_midi_port_name=push_midi_port_name)
-            self.midi_in_port.callback = self.on_midi_message
-        except (Push2MIDIeviceNotFound) as e:
-            logging.error('Could not initialize Push 2 MIDI: {0}'.format(e))
-
+        
         # Init individual sections
+        self.display = Push2Display(self)
         self.pads = Push2Pads(self)
         self.buttons = Push2Buttons(self)
         self.encoders = Push2Encoders(self)
         self.touchtrip = Push2TouchStrip(self)
+
+        # Initialize MIDI IN connection with push
+        try:
+            self.configure_midi_in()
+        except (Push2MIDIeviceNotFound, ) as e:
+            logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))        
+        
+        # NOTE: no need to initialize MIDI out connection and connection with display because
+        # these will be lazily initialized when required (i.e., when attempting to send MIDI to push
+        # or attempting to use the display)
+
 
     def trigger_action(self, *args, **kwargs):
         action_name = args[0]
@@ -76,20 +81,71 @@ class Push2(object):
             if action == action_name:
                 func[0](*new_args, **kwargs)  # TODO: why is func a 1-element list?
 
-    def configure_midi_ports(self, use_user_midi_port=False, push_midi_port_name=None):
-        if push_midi_port_name is None:
-            port_name = PUSH2_USER_PORT_NAME if use_user_midi_port else PUSH2_LIVE_PORT_NAME
-        else:
-            port_name = push_midi_port_name
+
+    @function_call_interval_limit(2)
+    def configure_midi(self):
         try:
-            self.midi_in_port = mido.open_input(port_name)
-            self.midi_out_port = mido.open_output(port_name)
-        except OSError:
-            raise Push2MIDIeviceNotFound
+            self.configure_midi_out()
+        except (Push2MIDIeviceNotFound, ) as e:
+            logging.error('Could not initialize Push 2 MIDI out: {0}'.format(e))
+        
+        try:
+            self.configure_midi_in()
+        except (Push2MIDIeviceNotFound, ) as e:
+            logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))
+
+
+    def configure_midi_in(self):
+        if self.midi_in_port is None:
+            port_name_to_use = None
+            for port_name in mido.get_input_names():
+                if is_push_midi_in_port_name(port_name, use_user_port=self.use_user_midi_port):
+                    port_name_to_use = port_name
+                    break
+
+            if port_name_to_use is None:
+                raise Push2MIDIeviceNotFound
+                
+            try:
+                self.midi_in_port = mido.open_input(port_name_to_use)
+                self.midi_in_port.callback = self.on_midi_message
+            except OSError as e:
+                raise Push2MIDIeviceNotFound
+
+
+    def configure_midi_out(self):
+        if self.midi_out_port is None:
+            port_name_to_use = None
+            for port_name in mido.get_output_names():
+                if is_push_midi_out_port_name(port_name, use_user_port=self.use_user_midi_port):
+                    port_name_to_use = port_name
+                    break
+                    
+            if port_name_to_use is None:
+                raise Push2MIDIeviceNotFound
+            
+            try:
+                self.midi_out_port = mido.open_output(port_name_to_use)
+            except OSError as e:
+                raise Push2MIDIeviceNotFound
+
+
+    def midi_is_configured(self):
+        """Returns True if MIDI communication with Push2 is properly configured, False otherwise
+        """
+        return self.midi_in_port is not None and self.midi_out_port is not None
+
 
     def send_midi_to_push(self, msg):
+
+        # If MIDI is not configured, configure it now
+        if not self.midi_is_configured():
+            self.configure_midi()
+
+        # If MIDI out was properly configured, send the MIDI message
         if self.midi_out_port is not None:
             self.midi_out_port.send(msg)
+
 
     def on_midi_message(self, message):
         """Handle incomming MIDI messages from Push.
@@ -101,6 +157,13 @@ class Push2(object):
         self.touchtrip.on_midi_message(message)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
+
+
+    def display_is_configured(self):
+        """Returns True if communication with Push2 display is properly configured, False otherwise
+        """
+        return self.display is not None and self.display.usb_endpoint is not None
+
 
 
 def action_handler(action_name, button_name=None, pad_n=None, pad_ij=None, encoder_name=None):

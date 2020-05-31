@@ -1,4 +1,5 @@
 import os
+import platform
 
 # Push2 map file
 PUSH2_MAP_FILE_PATH = os.path.join(os.path.dirname(__file__), 'Push2-map.json')
@@ -8,9 +9,55 @@ ABLETON_VENDOR_ID = 0x2982
 PUSH2_PRODUCT_ID = 0x1967
 USB_TRANSFER_TIMEOUT = 1000
 
-# MIDI
-PUSH2_USER_PORT_NAME = 'Ableton Push 2 User Port'
-PUSH2_LIVE_PORT_NAME = 'Ableton Push 2 Live Port'
+# MIDI PORT NAMES
+
+def is_push_midi_in_port_name(port_name, use_user_port=False):
+    """Returns True if the given 'port_name' is the MIDI port name corresponding to Push2 MIDI
+    input for the current OS platform. If 'use_user_port', it will check against Push2 User port instead
+    of Push2 Live port.
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#21-midi-interface-access
+    """
+    if platform.system() == "Linux":
+        if not use_user_port:
+            return 'Ableton Push' in port_name and port_name.endswith(':0')  # 'Ableton Push 2 nn:0', with nn being a variable number
+        else:
+            return 'Ableton Push' in port_name and port_name.endswith(':1')  # 'Ableton Push 2 nn:1', with nn being a variable number
+    elif platform.system() == "Windows":
+        if not use_user_port:
+            return 'MIDIIN2 (Ableton Push 2)' in port_name  # 'MIDIIN2 (Ableton Push 2) nn', with nn being a variable number
+        else:
+            return 'Ableton Push' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
+    else: #macOS
+        if not use_user_port:
+            return 'Ableton Push 2 Live Port' in port_name
+        else:
+            return 'Ableton Push 2 User Port' in port_name
+
+
+def is_push_midi_out_port_name(port_name, use_user_port=False):
+    """Returns True if the given 'port_name' is the MIDI port name corresponding to Push2 MIDI
+    output for the current OS platform. If 'use_user_port', it will check against Push2 User port instead
+    of Push2 Live port.
+    See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#21-midi-interface-access
+    """
+    if platform.system() == "Linux":
+        if not use_user_port:
+            return 'Ableton Push' in port_name and port_name.endswith(':0')  # 'Ableton Push 2 nn:0', with nn being a variable number
+        else:
+            return 'Ableton Push' in port_name and port_name.endswith(':1')  # 'Ableton Push 2 nn:1', with nn being a variable number
+    elif platform.system() == "Windows":
+        if not use_user_port:
+            return 'MIDIOUT2 (Ableton Push 2)' in port_name  # 'MIDIIN2 (Ableton Push 2) nn', with nn being a variable number
+        else:
+            return 'Ableton Push' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
+    else: #macOS
+        if not use_user_port:
+            return 'Ableton Push 2 Live Port' == port_name
+        else:
+            return 'Ableton Push 2 User Port' == port_name
+
+
+PUSH2_RECONNECT_INTERVAL = 2  # 2 seconds
 
 MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off'

@@ -38,6 +38,13 @@ class Push2Pads(AbstractPush2Section):
 
     current_pads_state = dict()
 
+    def reset_current_pads_state(self):
+        """This function resets the stored pads state to avoid Push2 pads becoming out of sync with the push2-midi stored state.
+        This only applies if "optimize_num_messages" is used in "set_pad_color" as it would stop sending a message if the
+        desired color is already the one listed in the internal state.
+        """
+        self.current_pads_state = dict()
+
 
     def set_polyphonic_aftertouch(self):
         """Set pad aftertouch mode to polyphonic aftertouch

@@ -2,11 +2,12 @@ import usb.core
 import usb.util
 import numpy
 import logging
-from .classes import AbstractPush2Section
+import time
+from .classes import AbstractPush2Section, function_call_interval_limit
 from .exceptions import Push2USBDeviceConfigurationError, Push2USBDeviceNotFound
 from .constants import ABLETON_VENDOR_ID, PUSH2_PRODUCT_ID, USB_TRANSFER_TIMEOUT, DISPLAY_FRAME_HEADER, \
     DISPLAY_BUFFER_SIZE, DISPLAY_FRAME_XOR_PATTERN, DISPLAY_N_LINES, DISPLAY_LINE_PIXELS, DISPLAY_LINE_FILLER_BYTES, \
-    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB
+    FRAME_FORMAT_BGR565, FRAME_FORMAT_RGB565, FRAME_FORMAT_RGB, PUSH2_RECONNECT_INTERVAL
 
 NP_DISPLAY_FRAME_XOR_PATTERN = numpy.array(DISPLAY_FRAME_XOR_PATTERN, dtype=numpy.uint16)  # Numpy array version of the constant
 
@@ -50,6 +51,8 @@ class Push2Display(AbstractPush2Section):
     usb_endpoint = None
     last_prepared_frame = None
 
+
+    @function_call_interval_limit(2)
     def configure_usb_device(self):
         """Connect to Push2 USB device and get the Endpoint object used to send data
         to Push2's display.
@@ -80,6 +83,7 @@ class Push2Display(AbstractPush2Section):
             raise Push2USBDeviceConfigurationError
 
         self.usb_endpoint = out_endpoint
+
 
     def prepare_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         """Prepare the given image frame to be shown in the Push2's display.
@@ -135,6 +139,7 @@ class Push2Display(AbstractPush2Section):
         self.last_prepared_frame = prepared_frame
         return prepared_frame.byteswap().tobytes()
 
+
     def send_to_display(self, prepared_frame):
         """Sends a prepared frame to Push2 display.
         First sends frame header and then sends prepared_frame in buffers of BUFFER_SIZE.
@@ -143,20 +148,34 @@ class Push2Display(AbstractPush2Section):
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#326-allocating-libusb-transfers
         """
 
-        if self.usb_endpoint is not None:
-            self.usb_endpoint.write(
-                DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
+        if self.usb_endpoint is None:
+            try:
+                self.configure_usb_device()
+            except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
+                logging.error('Could not initialize Push 2 Display: {0}'.format(e))         
 
-            self.usb_endpoint.write(prepared_frame, USB_TRANSFER_TIMEOUT)
-            for i in range(0, len(prepared_frame), DISPLAY_BUFFER_SIZE):
-                buffer_data = prepared_frame[i: i + DISPLAY_BUFFER_SIZE]
-                self.usb_endpoint.write(buffer_data, USB_TRANSFER_TIMEOUT)
+        if self.usb_endpoint is not None:
+            try:
+                self.usb_endpoint.write(
+                    DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
+
+                self.usb_endpoint.write(prepared_frame, USB_TRANSFER_TIMEOUT)
+                for i in range(0, len(prepared_frame), DISPLAY_BUFFER_SIZE):
+                    buffer_data = prepared_frame[i: i + DISPLAY_BUFFER_SIZE]
+                    self.usb_endpoint.write(buffer_data, USB_TRANSFER_TIMEOUT)
+            
+            except usb.core.USBError:
+                # USB connection error, disable connection, will try to reconnect next time a frame is sent
+                self.usb_endpoint = None
+                
 
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         self.send_to_display(self.prepare_frame(frame, input_format=input_format))
 
+
     def display_prepared_frame(self, prepared_frame):
         self.send_to_display(prepared_frame)
+
 
     def display_last_frame(self):
         self.send_to_display(self.last_prepared_frame)
