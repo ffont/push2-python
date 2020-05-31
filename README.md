@@ -53,7 +53,7 @@ push = push2_python.Push2()
 
 You can pass the optional argument `use_user_midi_port=True` when initializing `push` to tell it to use User MIDI port instead of Live MIDI port. Check [MIDI interface access](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#midi-interface-access) and [MIDI mode](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#MIDI%20Mode) sections of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for more information.
 
-When `push2_python.Push2()` is run, `push2_python` tries to set up MIDI in connection with Push2 so it can start receiving incomming MIDI in messages (e.g. if a pad is pressed). MIDI out connection and display connection are lazily configured the first time a frame is sent to the display or a MIDI message is sent to Push2 (e.g. to light a pad). If `push2_python.Push2()` is run while Push2 is powered off, it won't be able to automatically detect when it is powered on to automatically configure connection. Nevertheless, if a frame is sent to Push2's display or any MIDI message is sent after it has been powered on, then configuration will happen automatically and should work as expected. For the specific case of MIDI connection, after a connection has been first set up then `push2_python` will be able to detect when Push2 gets powered off and on by tracking *active sense* messages sent by Push2. In summary, if you want to build an app that can automatically connect to Push2 when it becomes available and/or recover from Push2 temporarily being unavailable we recommend that you have some sort of main loop that keeps trying to send frames to Push2 display (if you want to make use of the display) and/or keeps trying to send a MIDI message to Push2. As an example:
+When `push2_python.Push2()` is run, `push2_python` tries to set up MIDI in connection with Push2 so it can start receiving incomming MIDI in messages (e.g. if a pad is pressed). MIDI out connection and display connection are lazily configured the first time a frame is sent to the display or a MIDI message is sent to Push2 (e.g. to light a pad). If `push2_python.Push2()` is run while Push2 is powered off, it won't be able to automatically detect when it is powered on to automatically configure connection. Nevertheless, if a frame is sent to Push2's display or any MIDI message is sent after it has been powered on, then configuration will happen automatically and should work as expected. For the specific case of MIDI connection, after a connection has been first set up then `push2_python` will be able to detect when Push2 gets powered off and on by tracking *active sense* messages sent by Push2. In summary, if you want to build an app that can automatically connect to Push2 when it becomes available and/or recover from Push2 temporarily being unavailable we recommend that you have some sort of main loop that keeps trying to send frames to Push2 display (if you want to make use of the display) and/or keeps trying to configure Push2 MIDI. As an example:
 
 ```python
 import time
@@ -66,16 +66,18 @@ while True:  # This is your app's main loop
    frame = generate_frame_for_push_display()  # Some fake function to do that
    push.display.display_frame(frame)
    
-   # Try to light a button to force MIDI connection/reconnection
+   # Try to configure Push2 MIDI at every iteration (if not already configured)
    if not push.midi_is_configured():
-      push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
+      push.configure_midi()
    
    time.sleep(0.1)
 ```
 
-**NOTE**: This calls must be done from your app's main thread (where `push2_python.Push2()` is run). Maybe it is possible
+**NOTE 1**: This calls must be done from your app's main thread (where `push2_python.Push2()` is run). Maybe it is possible
 to delegate all connection with `push2_python` to a different thread (have not tried that), but it is important that all
 MIDI configuration calls happen in the same thread because of limitations of the `mido` Python MIDI package used by `push2_python`.
+
+**NOTE 2**: The solution above is only needed if you want to support Push2 being powered off when your app starts. After your app connects successfuly with Push2, the recurring check for MIDI configuration would not really be needed because `push2_python` will keep track of MIDI connections using active sensing.
 
 
 ### Setting action handlers for buttons, encoders, pads and the touchstrip
