@@ -18,7 +18,8 @@ from .push2_map import push2_map
 from .constants import is_push_midi_in_port_name, is_push_midi_out_port_name, PUSH2_MAP_FILE_PATH, ACTION_BUTTON_PRESSED, \
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
     ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED, PUSH2_RECONNECT_INTERVAL, ACTION_DISPLAY_CONNECTED, \
-    ACTION_DISPLAY_DISCONNECTED, ACTION_MIDI_CONNECTED, ACTION_MIDI_DISCONNECTED, PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL
+    ACTION_DISPLAY_DISCONNECTED, ACTION_MIDI_CONNECTED, ACTION_MIDI_DISCONNECTED, PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL, ACTION_SUSTAIN_PEDAL, \
+    MIDO_CONTROLCHANGE
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
@@ -197,10 +198,17 @@ class Push2(object):
                 # Right after first "active sensing" message is received (which means MIDI IN conneciton with Push is properly set),
                 # ignore the next 1 second of MIDI in messages as for some reason these include a burst of messages from Push which we 
                 # are not interested in (probably some internal state which Ableton uses but we don't care about?)
+                
+                # Send received message to each "part" so it is processes accordingly
                 self.pads.on_midi_message(message)
                 self.buttons.on_midi_message(message)
                 self.encoders.on_midi_message(message)
                 self.touchtrip.on_midi_message(message)
+
+                # Also check for some other extra general message types here
+                if message.type == MIDO_CONTROLCHANGE:
+                    if message.control == 64:  # Sustain pedal
+                        self.trigger_action(ACTION_SUSTAIN_PEDAL, message.value >= 64)
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
@@ -506,3 +514,19 @@ def on_midi_disconnected():
         print('MIDI connection to push was just lost!')
     """
     return action_handler(ACTION_MIDI_DISCONNECTED)
+
+
+def on_sustain_pedal():
+    """Shortcut for registering handlers for ACTION_SUSTAIN_PEDAL events.
+    Functions decorated with this decorator will be called when the sustain pedal connected to Push2 sustain
+    pedal jack is either pressed or released. It will have the following positional arguments:
+        * Push2 object instance
+        * Sustain pedal state (True if sustain pedal was pressed, False if sustain pedal was released)
+
+    Examples:
+
+    @push2_python.on_sustain_pedal()
+    def function(push, sustain_on):
+        print('Sustain predal pressed' if sustain_on else 'Sustain predal released')
+    """
+    return action_handler(ACTION_SUSTAIN_PEDAL)

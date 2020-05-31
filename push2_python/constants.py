@@ -134,6 +134,7 @@ ACTION_DISPLAY_CONNECTED = 'on_display_connected'
 ACTION_DISPLAY_DISCONNECTED = 'on_display_disconnected'
 ACTION_MIDI_CONNECTED = 'on_midi_connected'
 ACTION_MIDI_DISCONNECTED = 'on_midi_disconnected'
+ACTION_SUSTAIN_PEDAL = 'on_sustain_pedal'
 
 # Push2 button names
 # NOTE: the list of button names is here to facilitate autocompletion when developing apps using push2_python package, but is not needed for the package

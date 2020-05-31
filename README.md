@@ -112,6 +112,7 @@ These are all available decorators for setting up action handlers:
 * `@push2_python.on_display_disconnected()`
 * `@push2_python.on_midi_connected()`
 * `@push2_python.on_midi_disconnected()`
+* `@push2_python.on_sustain_pedal()`
 
 Full documentation for each of these can be found in their docstrings [starting here](https://github.com/ffont/push2-python/blob/master/push2_python/__init__.py#L128). 
 Also have a look at the [code examples](#code-examples) below to get an immediate idea about how it works.
