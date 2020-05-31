@@ -126,25 +126,25 @@ class Push2Pads(AbstractPush2Section):
 
     def on_midi_message(self, message):
         if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, MIDO_AFTERTOUCH]:
-            if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
-                if message.type != MIDO_AFTERTOUCH:
+            if message.type != MIDO_AFTERTOUCH:
+                if 36 <= message.note <= 99:  # Min and max pad MIDI values according to Push Spec
                     pad_n = message.note
                     pad_ij = self.pad_n_to_pad_ij(pad_n)
-                if message.type == MIDO_POLYAT or message.type == MIDO_AFTERTOUCH:
-                    velocity = message.value
-                else:
-                    velocity = message.velocity
-                if message.type == MIDO_NOTEON:
-                    self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)  # Trigger generic pad action
-                    self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_PRESSED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
-                elif message.type == MIDO_NOTEOFF:
-                    self.push.trigger_action(ACTION_PAD_RELEASED, pad_n, pad_ij, velocity)
-                    self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_RELEASED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
-                elif message.type == MIDO_POLYAT:
-                    self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)
-                    self.push.trigger_action(get_individual_pad_action_name(
-                        ACTION_PAD_AFTERTOUCH, pad_n=pad_n), velocity)  # Trigger individual pad action as well
-                elif message.type == MIDO_AFTERTOUCH:
-                    self.push.trigger_action(ACTION_PAD_AFTERTOUCH, None, None, velocity)
+                    if message.type == MIDO_POLYAT:
+                        velocity = message.value
+                    else:
+                        velocity = message.velocity
+                    if message.type == MIDO_NOTEON:
+                        self.push.trigger_action(ACTION_PAD_PRESSED, pad_n, pad_ij, velocity)  # Trigger generic pad action
+                        self.push.trigger_action(get_individual_pad_action_name(
+                            ACTION_PAD_PRESSED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
+                    elif message.type == MIDO_NOTEOFF:
+                        self.push.trigger_action(ACTION_PAD_RELEASED, pad_n, pad_ij, velocity)
+                        self.push.trigger_action(get_individual_pad_action_name(
+                            ACTION_PAD_RELEASED, pad_n=pad_n), velocity)  # Trigger individual pad action as well
+                    elif message.type == MIDO_POLYAT:
+                        self.push.trigger_action(ACTION_PAD_AFTERTOUCH, pad_n, pad_ij, velocity)
+                        self.push.trigger_action(get_individual_pad_action_name(
+                            ACTION_PAD_AFTERTOUCH, pad_n=pad_n), velocity)  # Trigger individual pad action as well
+            elif message.type == MIDO_AFTERTOUCH:
+                self.push.trigger_action(ACTION_PAD_AFTERTOUCH, None, None, message.value)
