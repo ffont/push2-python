@@ -57,7 +57,7 @@ def is_push_midi_out_port_name(port_name, use_user_port=False):
             return 'Ableton Push 2 User Port' == port_name
 
 
-PUSH2_RECONNECT_INTERVAL = 2  # 2 seconds
+PUSH2_RECONNECT_INTERVAL = 0.5  # 0.5 seconds
 PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL = 0.5  # 0.5 seconds
 
 MIDO_NOTEON = 'note_on'
