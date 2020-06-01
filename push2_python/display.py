@@ -91,7 +91,7 @@ class Push2Display(AbstractPush2Section):
         try:
             # Try sending a framr header as a test...
             out_endpoint.write(DISPLAY_FRAME_HEADER, USB_TRANSFER_TIMEOUT)
-            black_frame = self.prepare_frame(numpy.zeros((DISPLAY_LINE_PIXELS, DISPLAY_N_LINES), dtype=numpy.uint16), input_format=FRAME_FORMAT_BGR565)
+            black_frame = self.prepare_frame(self.make_black_frame(), input_format=FRAME_FORMAT_BGR565)
             out_endpoint.write(black_frame, USB_TRANSFER_TIMEOUT)
         except usb.core.USBError:
             self.usb_endpoint = None
@@ -155,6 +155,10 @@ class Push2Display(AbstractPush2Section):
 
         self.last_prepared_frame = prepared_frame
         return prepared_frame.byteswap().tobytes()
+
+
+    def make_black_frame(self):
+        return numpy.zeros((DISPLAY_LINE_PIXELS, DISPLAY_N_LINES), dtype=numpy.uint16)
 
 
     def send_to_display(self, prepared_frame):
