@@ -65,10 +65,7 @@ class Push2(object):
         self.touchtrip = Push2TouchStrip(self)
 
         # Initialize MIDI IN connection with push
-        try:
-            self.configure_midi_in()
-        except (Push2MIDIeviceNotFound, ) as e:
-            logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))        
+        self.configure_midi(skip_midi_out=True)
         
         # NOTE: no need to initialize MIDI out connection and connection with display because
         # these will be lazily initialized when required (i.e., when attempting to send MIDI to push
@@ -113,16 +110,27 @@ class Push2(object):
 
 
     @function_call_interval_limit(PUSH2_RECONNECT_INTERVAL)
-    def configure_midi(self):
-        try:
-            self.configure_midi_out()
-        except (Push2MIDIeviceNotFound, ) as e:
-            logging.error('Could not initialize Push 2 MIDI out: {0}'.format(e))
+    def configure_midi(self, skip_midi_out=False, skip_midi_in=False):
+        """Calling this function will try to configure MIDI in/out connection with Push2. If configuration
+        is already properly set up, nothing will be done so it is safe to call this even if MIDI has already
+        been configured. 
         
-        try:
-            self.configure_midi_in()
-        except (Push2MIDIeviceNotFound, ) as e:
-            logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))
+        This function is decorated with 'function_call_interval_limit' which means that it is only going to be executed 
+        if PUSH2_RECONNECT_INTERVAL seconds have passed since the last time the function was called. This is to avoid 
+        potential problems trying to configure MIDI many times per second. To ignore this limitation, 'self.configure_midi_out()' 
+        and 'self.configure_midi_in()' can be called instead.
+        """
+        if not skip_midi_out:
+            try:
+                self.configure_midi_out()
+            except (Push2MIDIeviceNotFound, ) as e:
+                logging.error('Could not initialize Push 2 MIDI out: {0}'.format(e))
+        
+        if not skip_midi_in:
+            try:
+                self.configure_midi_in()
+            except (Push2MIDIeviceNotFound, ) as e:
+                logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))
 
 
     def configure_midi_in(self):

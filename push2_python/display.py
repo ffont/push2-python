@@ -57,6 +57,11 @@ class Push2Display(AbstractPush2Section):
     def configure_usb_device(self):
         """Connect to Push2 USB device and get the Endpoint object used to send data
         to Push2's display.
+
+        This function is decorated with 'function_call_interval_limit' which means that it is only going to be executed if 
+        PUSH2_RECONNECT_INTERVAL seconds have passed since the last time the function was called. This is to avoid potential 
+        problems trying to configure display many times per second.
+
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#31-usb-display-interface-access
         """
         usb_device = None
