@@ -40,6 +40,7 @@ class Push2(object):
     touchtrip = None
     use_user_midi_port = False
     last_active_sensing_received = None
+    function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
 
 
     def __init__(self, use_user_midi_port=False):
@@ -97,6 +98,11 @@ class Push2(object):
 
         f_stop = threading.Event()
         check_active_sensing(f_stop)
+
+
+    def set_push2_reconnect_call_interval(self, new_interval):
+        self.function_call_interval_limit_overwrite = new_interval
+        self.display.function_call_interval_limit_overwrite = new_interval
 
 
     def trigger_action(self, *args, **kwargs):

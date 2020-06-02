@@ -7,6 +7,10 @@ def function_call_interval_limit(interval):
     """Decorator that makes sure the decorated function is only executed once in the given
     time interval (in seconds). It stores the last time the decorated function was executed
     and if it was less than "interval" seconds ago, a dummy function is returned instead.
+    This decorator also check at runtime if the first argument of the decorated function call
+    has the porperty "function_call_interval_limit_overwrite" exists. If that is the cases,
+    it uses its value as interval rather than the "interval" value passed in the decorator
+    definition.
     """
     def decorator(func):
         @functools.wraps(func)
@@ -17,6 +21,16 @@ def function_call_interval_limit(interval):
                 setattr(function_call_interval_limit, last_time_called_key, current_time)
                 return func(*args, **kwargs)
 
+            try:
+                # First argument in the func call should be class instance (i.e. self), try to get interval
+                # definition from calss at runtime so it is adjustable
+                new_interval = args[0].function_call_interval_limit_overwrite
+                interval = new_interval
+            except:
+                # If property "function_call_interval_limit_overwrite" not found in class instance, just use the interval
+                # given in the decorator definition
+                pass            
+    
             if current_time - getattr(function_call_interval_limit, last_time_called_key) >= interval:
                 setattr(function_call_interval_limit, last_time_called_key, current_time)
                 return func(*args, **kwargs)

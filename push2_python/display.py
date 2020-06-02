@@ -51,6 +51,7 @@ class Push2Display(AbstractPush2Section):
     """
     usb_endpoint = None
     last_prepared_frame = None
+    function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
 
 
     @function_call_interval_limit(PUSH2_RECONNECT_INTERVAL)
