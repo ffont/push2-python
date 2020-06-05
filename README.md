@@ -155,7 +155,7 @@ push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green')
 All pads support RGB colors, and some buttons do as well. However, some buttons only support black and white. Checkout the MIDI mapping diagram in the 
 [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
 
-For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). First item of each color entry corresponds to the RGB color name while second item corresponds to the BW color name. The color palette can be customized using the `set_color_palette_entry` and `reapply_color_palette` of Push2 object. See the documentation of these methods for more details.
+For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). First item of each color entry corresponds to the RGB color name while second item corresponds to the BW color name. The color palette can be customized using the `set_color_palette_entry`, `update_rgb_color_palette_entry` and `reapply_color_palette` of Push2 object. See the documentation of these methods for more details.
 
 
 ### Interface with the display
