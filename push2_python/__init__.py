@@ -19,7 +19,7 @@ from .constants import is_push_midi_in_port_name, is_push_midi_out_port_name, PU
     ACTION_BUTTON_RELEASED, ACTION_TOUCHSTRIP_TOUCHED, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, \
     ACTION_ENCODER_ROTATED, ACTION_ENCODER_TOUCHED, ACTION_ENCODER_RELEASED, PUSH2_RECONNECT_INTERVAL, ACTION_DISPLAY_CONNECTED, \
     ACTION_DISPLAY_DISCONNECTED, ACTION_MIDI_CONNECTED, ACTION_MIDI_DISCONNECTED, PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL, ACTION_SUSTAIN_PEDAL, \
-    MIDO_CONTROLCHANGE
+    MIDO_CONTROLCHANGE, PUSH2_SYSEX_PREFACE_BYTES, PUSH2_SYSEX_END_BYTES, DEFAULT_COLOR_PALETTE, DEFAULT_RGB_COLOR, DEFAULT_BW_COLOR
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
@@ -41,6 +41,7 @@ class Push2(object):
     use_user_midi_port = False
     last_active_sensing_received = None
     function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
+    color_palette = DEFAULT_COLOR_PALETTE
 
 
     def __init__(self, use_user_midi_port=False):
@@ -226,6 +227,146 @@ class Push2(object):
 
         logging.debug('Received MIDI message from Push: {0}'.format(message))
 
+
+    def set_color_palette_entry(self, color_idx, color_name, rgb=None, bw=None, allow_overwrite=False):
+        """Updates internal Push color palette so that colors for pads and buttons can be customized.
+        Using this method will update the color palette in Push hardware, and also the color palette used by the Push2 python object
+        so that colors can be changed accordingly.
+
+        The way color palette is updated is by specifying a color index ('color_idx' parameter, range [0..127]) and its corresponding rgb values ('rgb'
+        parameter, as a 3-element list of floats from [0..1] or integers [0..255]) and/or black and white value ('bw' parameter, as a single
+        brilliance float from [0..1] or integer [0..255]). Therefore, this method allows you to specify a color for the same color entry in
+        the RGB and BW palettes. If either 'rgb' or 'bw' is not specified, this method will make an "intelligent" guess to set the other. In
+        addition to 'color_idx' and 'rgb'/'bw' values, a 'color_name' must be given to further identify the color. 'color_name' should be
+        either a str (in this case the same name will be used for the RGB and BW palettes), or as a 2-element list with the color corresponding
+        to the 'rgb' color (1st element) and then name for the 'bw' color (2nd element).
+
+        If 'allow_overwrite' is not set to True, this method will raise exception if the given color name already exists in the RGB or BW color
+        palette.
+
+        Note that changes in the Push color palete using this method won't become active until method 'reapply_color_palette' is called.
+
+        Examples:
+
+            # Configure palette entry 0 to be red (for rgb colors) and gray (for bw colors)
+            set_color_palette_entry(0, ['red', 'gray'], rgb=[255, 0, 0], bw=128)  
+
+            # Configure palette entry 0 to be dark green (for rgb colors) and white (for bw colors)
+            set_color_palette_entry(0, ['dark green', 'white'], rgb=[0, 100, 0], bw=255)  
+
+            # Apply the changes in Push
+            reapply_color_palette()
+            
+
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#262-rgb-led-color-processing
+        """
+
+        assert type(color_idx) == int, 'Parameter "color_idx" must be an integer'
+        assert 0 <= color_idx <= 127, 'Parameter "color_idx" must be in range [0..127]'
+
+        assert rgb is not None or bw is not None, 'At least "rgb" or "bw" parameter (or both) should be provided'
+        
+        if rgb is not None:
+            assert len(rgb) == 3, 'Parameter "rgb" should have 3 elements'
+
+        if type(color_name) == str:
+            color_names = [color_name, color_name]
+        else:
+            assert len(color_name) == 2, 'Parameter "color_name" should have 2 elements'
+            color_names = color_name
+
+        if not allow_overwrite:
+            assert color_names[0] not in [rgb_color_name for rgb_color_name, _ in self.color_palette.values()], 'A color with name "{0}" for RGB palette already exists'.format(color_names[0])
+            assert color_names[1] not in [bw_color_name for _, bw_color_name in self.color_palette.values()], 'A color with name "{0}" for BW palette already exists'.format(color_names[1])
+
+        def check_color_range(c):
+            # If color is float, map it to [0..255], also check range is inside [0..255]
+            if type(c) == float:
+                c = int(round(c * 255))
+            if c < 0:
+                c = 0
+            elif c > 255:
+                c = 255
+            return c
+
+        if rgb is not None:
+            r = check_color_range(rgb[0])
+            g = check_color_range(rgb[1])
+            b = check_color_range(rgb[2])
+        else:
+            # If rgb is not provided, w will have been provided, use this number for all components
+            r = check_color_range(bw)
+            g = r
+            b = r
+
+        if bw is not None:
+            w = check_color_range(bw)
+        else:
+            # If white is not provided, rgb will have been provided, use an average of it ti decide white
+            w = check_color_range(int((r + g + b) / 3))
+
+        # Send message to Push to update internal color palette
+        red_bytes = [r % 128, r // 128]
+        green_bytes = [g % 128, g // 128]
+        blue_bytes = [b % 128, b // 128]
+        white_bytes = [w % 128, w // 128]
+        message_bytes = PUSH2_SYSEX_PREFACE_BYTES + [0x03] + [color_idx] + red_bytes + green_bytes + blue_bytes + white_bytes + PUSH2_SYSEX_END_BYTES
+        msg = mido.Message.from_bytes(message_bytes)
+        self.send_midi_to_push(msg)
+
+        # Update self.color_palette with given color names (first one for rgb, second one for bw)
+        self.color_palette[color_idx] = color_names
+
+
+    def update_rgb_color_palette_entry(self, color_name, rgb):
+        """This method finds an RGB color name in the RGB palette and updates it's color values to the given rgb.
+        See 'set_color_palette_entry' for details on how rgb values should be given.
+        Note that if ther's a BW color in the same RGB color name entry, it will be overwriten.
+        Note that changes in the Push color palete using this method won't become active until method 'reapply_color_palette' is called.
+
+        Example:
+        
+            # Customize 'green' colour
+            update_rgb_color_palette_entry('green', [0, 0, 240])
+            
+            # Apply the changes in Push
+            reapply_color_palette()
+        """
+        idx = None
+        for color_idx, (rgb_color_name, _) in self.color_palette.items():
+            if color_name == rgb_color_name:
+                idx = color_idx
+        assert idx is not None, 'No color with name {0} is in RGB color palette'.format(color_name)
+        self.set_color_palette_entry(idx, color_name, rgb=rgb, allow_overwrite=True)
+
+
+    def get_rgb_color(self, color_name):
+        """Get correpsonding color index of the color palette for a RGB color name.
+        If color is not found, the default RGB index value will be returned.
+        """
+        for color_idx, (rgb_color_name, _) in self.color_palette.items():
+            if color_name == rgb_color_name:
+                return color_idx
+        return DEFAULT_RGB_COLOR
+
+
+    def get_bw_color(self, color_name):
+        """Get correpsonding color index of the color palette for a BW color name.
+        If color is not found, the default BW index value will be returned.
+        """
+        for color_idx, (_, bw_color_name) in self.color_palette.items():
+            if color_name == bw_color_name:
+                return color_idx
+        return DEFAULT_BW_COLOR
+
+    def reapply_color_palette(self):
+        """This method sends a sysex message to Push to make it update the colors of all pads and buttons according to the color palette entries
+        that have been updated using the 'set_color_palette_entry' method.
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#262-rgb-led-color-processing
+        """
+        message_bytes =  PUSH2_SYSEX_PREFACE_BYTES + [0x05] + PUSH2_SYSEX_END_BYTES
+        msg = mido.Message.from_bytes(message_bytes)
+        self.send_midi_to_push(msg)
 
     def display_is_configured(self):
         """Returns True if communication with Push2 display is properly configured, False otherwise

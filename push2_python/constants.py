@@ -67,6 +67,9 @@ MIDO_AFTERTOUCH = 'aftertouch'
 MIDI_PITCWHEEL = 'pitchwheel'
 MIDO_CONTROLCHANGE = 'control_change'
 
+PUSH2_SYSEX_PREFACE_BYTES = [0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01]
+PUSH2_SYSEX_END_BYTES = [0xF7]
+
 # Push 2 Display
 DISPLAY_FRAME_HEADER = [0xff, 0xcc, 0xaa, 0x88,
                         0x00, 0x00, 0x00, 0x00,
@@ -86,34 +89,31 @@ FRAME_FORMAT_BGR565 = 'bgr565'
 FRAME_FORMAT_RGB565 = 'rgb565'
 FRAME_FORMAT_RGB = 'rgb'
 
-# LED colors and anumations
-# NOTE: this is a subset of colors from the default palette
-# To do this properly we should define a custom color palette and
-# send it to Push
-RGB_COLORS = {  
-    'black': 0,
-    'white': 122,
-    'light_gray': 123,
-    'dark_gray': 124,
-    'blue': 125,
-    'green': 126,
-    'red': 127,
-    'orange': 3,
-    'yellow': 8,
-    'turquoise': 15,
-    'purple': 22,
-    'pink': 25,
+# LED rgb default color palette
+# Color palette is defined as a dictionary where keys are a color index [0..127] and
+# values are a 2-element list with the first element corresponding to the given RGB color name
+# for that index and the second element being the given BW color name for that index
+# This palette can be cusomized using `Push2.set_color_palette_entry` method.
+DEFAULT_COLOR_PALETTE = {
+    0: ['black', 'black'],
+    3: ['orange', None],
+    8: ['yellow', None],
+    15: ['turquoise', None],
+    16: [None, 'dark_gray'],
+    22: ['purple', None],
+    25: ['pink', None],
+    48: [None, 'light_gray'],
+    122: ['white', None],
+    123: ['light_gray', None],
+    124: ['dark_gray', None],
+    125: ['blue', None],
+    126: ['green', None],
+    127: ['red', 'white']
 }
-RGB_DEFAULT_COLOR = 126
+DEFAULT_RGB_COLOR = 126
+DEFAULT_BW_COLOR = 127
 
-BLACK_WHITE_COLORS = {
-    'black': 0,
-    'dark_gray': 16,
-    'light_gray': 48,
-    'white': 127,
-}
-BLACK_WHITE_DEFAULT_COLOR = 127
-
+# Led animations
 ANIMATIONS = {  # TODO: animations only work when MIDI clock data is sent (?)
     'static': 1,  # TODO: revise these values, static should be 0?
     'blinking': 14

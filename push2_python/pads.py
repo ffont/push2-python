@@ -1,6 +1,7 @@
 import mido
-from .constants import RGB_COLORS, RGB_DEFAULT_COLOR, ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, \
-    MIDO_POLYAT, MIDO_AFTERTOUCH, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH
+from .constants import ANIMATIONS, ANIMATIONS_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, \
+    MIDO_POLYAT, MIDO_AFTERTOUCH, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, PUSH2_SYSEX_PREFACE_BYTES, \
+    PUSH2_SYSEX_END_BYTES
 from .classes import AbstractPush2Section
 
 
@@ -50,14 +51,14 @@ class Push2Pads(AbstractPush2Section):
         """Set pad aftertouch mode to polyphonic aftertouch
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
         """
-        msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x01, 0xF7])
+        msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x1E, 0x01] + PUSH2_SYSEX_END_BYTES)
         self.push.send_midi_to_push(msg)
 
     def set_channel_aftertouch(self):
         """Set pad aftertouch mode to channel aftertouch
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#285-aftertouch
         """
-        msg = mido.Message.from_bytes([0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x1E, 0x00, 0xF7])
+        msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x1E, 0x00] + PUSH2_SYSEX_END_BYTES)
         self.push.send_midi_to_push(msg)
 
     def pad_ij_to_pad_n(self, i, j):
@@ -68,7 +69,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_pad_color(self, pad_ij, color='white', animation='static', optimize_num_messages=True):
         """Sets the color of the pad at the (i,j) coordinate.
-        'color' must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        'color' must be a valid RGB color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
         'animation' must be an existing key of push2_python.contants.ANIMATIONS dictionary.
         This funtion will keep track of the latest color/animation values set for each specific pad. If 'optimize_num_messages' is 
         set to True, set_pad_color will only actually send the MIDI message to push if either the color or animation that should 
@@ -76,7 +77,7 @@ class Push2Pads(AbstractPush2Section):
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
         pad = self.pad_ij_to_pad_n(pad_ij[0], pad_ij[1])
-        color = RGB_COLORS.get(color, RGB_DEFAULT_COLOR)
+        color = self.push.get_rgb_color(color)
         animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
         if optimize_num_messages and pad in self.current_pads_state and self.current_pads_state[pad]['color'] == color and self.current_pads_state[pad]['animation'] == animation:
             # If pad's recorded state already has the specified color and animation, return method before sending the MIDI message
@@ -87,7 +88,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
-        Individual elements in the color_matrix must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        Individual elements in the color_matrix must be valid RGB color palette names. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
         Matrices must be 8x8, with 8 lines of 8 values corresponding to the pad grid from top-left to bottom-down.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#261-setting-led-colors
         """
@@ -106,7 +107,7 @@ class Push2Pads(AbstractPush2Section):
 
     def set_all_pads_to_color(self, color='white', animation='static'):
         """Set all pads to the given color/animation.
-        Color must be an existing key of push2_python.contants.RGB_COLORS dictionary.
+        'color' must be a valid RGB color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
         """
         color_matrix = [[color for _ in range(0, 8)] for _ in range(0, 8)]
         animation_matrix = [[animation for _ in range(0, 8)] for _ in range(0, 8)]

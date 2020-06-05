@@ -5,6 +5,7 @@ Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) fro
 These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for comunicating with Push 2. I recommend reading Ableton's manual before using this tool.
 
 So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
+*EDIT*: customization of color palettes is now implemented!
 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. ~~It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux~~. **UPDATE**: MIDI port names should now be cross-platform, but I have not tested them on Linux/Windows.
 
@@ -154,14 +155,7 @@ push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green')
 All pads support RGB colors, and some buttons do as well. However, some buttons only support black and white. Checkout the MIDI mapping diagram in the 
 [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
 
-For a list of avilable RGB colors check the keys of the `RGB_COLORS` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). Similarly, black and white available colors are defined in the `BLACK_WHITE_COLORS` dictionary in the same file. You can also list available colors in code like this:
-
-```python
-print(list(push2_python.constants.RGB_COLORS.keys()))
-print(list(push2_python.constants.BLACK_WHITE_COLORS.keys()))
-```
-
-**NOTE**: The Push 2 Interface Manual provides a way to configure custom color palettes which has not yet been implemented in `push2-python`. Also, only a limited number of colors is included here but many more are avilable in the default color palette.
+For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). First item of each color entry corresponds to the RGB color name while second item corresponds to the BW color name. The color palette can be customized using the `set_color_palette_entry` and `reapply_color_palette` of Push2 object. See the documentation of these methods for more details.
 
 
 ### Interface with the display
