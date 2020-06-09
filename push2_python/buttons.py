@@ -57,4 +57,5 @@ class Push2Buttons(AbstractPush2Section):
                 action = ACTION_BUTTON_PRESSED if message.value == 127 else ACTION_BUTTON_RELEASED
                 self.push.trigger_action(action, button['Name'])  # Trigger generic button action
                 self.push.trigger_action(get_individual_button_action_name(action, button['Name']))  # Trigger individual button action as well
+                return True
 

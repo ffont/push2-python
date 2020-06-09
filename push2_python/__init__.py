@@ -215,10 +215,10 @@ class Push2(object):
                 # are not interested in (probably some internal state which Ableton uses but we don't care about?)
                 
                 # Send received message to each "part" so it is processes accordingly
-                self.pads.on_midi_message(message)
-                self.buttons.on_midi_message(message)
-                self.encoders.on_midi_message(message)
-                self.touchtrip.on_midi_message(message)
+                for func in [self.pads.on_midi_message, self.buttons.on_midi_message, self.encoders.on_midi_message, self.touchtrip.on_midi_message]:
+                    action_taken = func(message)
+                    if action_taken:
+                        break  # Early return from for loop to avoid running unnecessary checks
 
                 # Also check for some other extra general message types here
                 if message.type == MIDO_CONTROLCHANGE:

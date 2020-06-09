@@ -52,6 +52,7 @@ class Push2Encoders(AbstractPush2Section):
                     self.push.trigger_action(action, encoder['Name'], value)  # Trigger generic rotate encoder action
                     self.push.trigger_action(get_individual_encoder_action_name(
                         action, encoder['Name']), value)  # Trigger individual rotate encoder action as well
+                    return True
         elif message.type in [MIDO_NOTEON, MIDO_NOTEOFF]:  # Encoder touched or released
             if message.note in self.encoder_touch_map:  # Note number corresponds to one of the encoders in touch mode
                 encoder = self.encoder_touch_map[message.note]
@@ -59,3 +60,4 @@ class Push2Encoders(AbstractPush2Section):
                 self.push.trigger_action(action, encoder['Name'])  # Trigger generic touch/release encoder action
                 self.push.trigger_action(get_individual_encoder_action_name(
                     action, encoder['Name']))  # Trigger individual touch/release encoder action as well
+                return True

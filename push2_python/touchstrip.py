@@ -13,3 +13,4 @@ class Push2TouchStrip(AbstractPush2Section):
         if message.type == MIDI_PITCWHEEL:
             value = message.pitch
             self.push.trigger_action(ACTION_TOUCHSTRIP_TOUCHED, value)
+            return True
