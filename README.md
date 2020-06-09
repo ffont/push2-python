@@ -140,7 +140,6 @@ to each pad as defined in [Push 2 MIDI and Display Interface Manual](https://git
 Pad and button colors can be set using methods provided by the `Push2` object. For example you can set pad colors using the following code:
 
 ```python
-push = push2_python.Push2() 
 pad_ij = (0, 3)  # Fourth pad of the top row
 push.pads.set_pad_color(pad_ij, 'green')
 ```
@@ -148,7 +147,6 @@ push.pads.set_pad_color(pad_ij, 'green')
 You set button colors in a similar way:
 
 ```python
-push = push2_python.Push2() 
 push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green')
 ```
 
@@ -156,6 +154,18 @@ All pads support RGB colors, and some buttons do as well. However, some buttons 
 [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
 
 For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). First item of each color entry corresponds to the RGB color name while second item corresponds to the BW color name. The color palette can be customized using the `set_color_palette_entry`, `update_rgb_color_palette_entry` and `reapply_color_palette` of Push2 object. See the documentation of these methods for more details.
+
+
+### Adjust pad sensitivity
+
+`push2-python` implements methods to adjust Push2 pads sensitivity, in particualr it incorporates methods to adjust the velocity curve (which applies to
+note on velocities and to poolyphonic aftertouch sensistivity), and the channel aftertouch range. You can do that using the methods `set_channel_aftertouch_range` 
+and `set_velocity_curve` from the `pads` section. Below are two examples of adjusting sensitivity. Please check methods' documentation for more information.
+
+```python
+push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)  # Configure channel after touch to be quite sensitive
+push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])  # Map full velocity range to the first 40 pressure values
+```
 
 
 ### Interface with the display

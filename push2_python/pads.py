@@ -61,6 +61,36 @@ class Push2Pads(AbstractPush2Section):
         msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x1E, 0x00] + PUSH2_SYSEX_END_BYTES)
         self.push.send_midi_to_push(msg)
 
+
+    def set_channel_aftertouch_range(self, range_start=401, range_end=2048):
+        """Configures the sensitivity of channel aftertouch by defining at what "range start" pressure value the aftertouch messages
+        start to be triggered and what "range end" pressure value corresponds to the aftertouch value 127. I'm not sure about the meaning
+        of the pressure values, but according to the documentation must be between 400 and 2048.
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#282-pad-parameters
+        """
+        assert type(range_start) == int and type(range_end) == int, "range_start and range_end must be int"
+        assert range_start < range_end, "range_start must be lower than range_end"
+        assert 400 < range_start < range_end, "wrong range_start value, must be in range [401, range_end]"
+        assert range_start < range_end <= 2048, "wrong range_end value, must be in range [range_start + 1, 2048]"
+        lower_range_bytes = [range_start % 2**7, range_start // 2**7]
+        upper_range_bytes = [range_end % 2**7, range_end // 2**7]
+        msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x1B, 0x00, 0x00, 0x00, 0x00] + lower_range_bytes + upper_range_bytes + PUSH2_SYSEX_END_BYTES)
+        self.push.send_midi_to_push(msg)
+
+
+    def set_velocity_curve(self, velocities):
+        """Configures Push pad's velocity curve which will determine i) the velocity values triggered when pressing pads; and ii) the
+        sensitivity of the aftertouch when in polyphonic aftertouch mode. Push uses a map of physical pressure values [0g..4095g]
+        to MIDI velocity values [0..127]. This map is quantized into 128 steps which Push then interpolates. This method expects a list of 
+        128 velocity values which will be assigned to each of the 128 quantized steps of the physical pressure range [0g..4095g].
+        See hhttps://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#281-velocity-curve
+        """
+        assert type(velocities) == list and len(velocities) == 128 and type(velocities[0] == int), "velocities must be a list with 128 int values"
+        for start_index in range(0, 128, 16):
+            msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x20] + [start_index] + velocities[start_index:start_index + 16] + PUSH2_SYSEX_END_BYTES)
+            self.push.send_midi_to_push(msg)
+
+
     def pad_ij_to_pad_n(self, i, j):
         return pad_ij_to_pad_n(i, j)
 
