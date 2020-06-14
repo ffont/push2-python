@@ -29,6 +29,7 @@ def function_call_interval_limit(interval):
             except AttributeError:
                 # If property "function_call_interval_limit_overwrite" not found in class instance, just use the interval
                 # given in the decorator definition
+                pass
     
             if current_time - getattr(function_call_interval_limit, last_time_called_key) >= interval:
                 setattr(function_call_interval_limit, last_time_called_key, current_time)
