@@ -97,8 +97,12 @@ class Push2(object):
             if not f_stop.is_set():
                 threading.Timer(0.3, check_active_sensing, [f_stop]).start()  # Run this check every 300 ms
 
-        f_stop = threading.Event()
-        check_active_sensing(f_stop)
+        self.f_stop = threading.Event()
+        check_active_sensing(self.f_stop)
+
+
+    def stop_active_sensing_thread(self):
+        self.f_stop.set()
 
 
     def set_push2_reconnect_call_interval(self, new_interval):
