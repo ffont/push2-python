@@ -41,7 +41,7 @@ class Push2(object):
     use_user_midi_port = False
     last_active_sensing_received = None
     function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
-    color_palette = DEFAULT_COLOR_PALETTE
+    color_palette = DEFAULT_COLOR_PALETTE.copy()
 
 
     def __init__(self, use_user_midi_port=False):
