@@ -37,6 +37,7 @@ class Push2Buttons(AbstractPush2Section):
         """Sets the color of the button with given name.
         'color' must be a valid RGB or BW color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
         If the button only acceps BW colors, the color name will be matched against the BW palette, otherwise it will be matched against RGB palette.
+        'animation' must be an existing key of push2_python.contants.ANIMATIONS dictionary.
         See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#setting-led-colors
         """
         button_n = self.button_name_to_button_n(button_name)
@@ -49,6 +50,16 @@ class Push2Buttons(AbstractPush2Section):
             animation = ANIMATIONS.get(animation, ANIMATIONS_DEFAULT)
             msg = mido.Message(MIDO_CONTROLCHANGE, control=button_n, value=color_idx, channel=animation)
             self.push.send_midi_to_push(msg)
+
+    def set_all_buttons_color(self, color='white', animation='static'):
+        """Sets the color of all buttons in Push2 to the given color.
+        'color' must be a valid RGB or BW color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
+        If the button only acceps BW colors, the color name will be matched against the BW palette, otherwise it will be matched against RGB palette.
+        'animation' must be an existing key of push2_python.contants.ANIMATIONS dictionary.
+        See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#setting-led-colors
+        """
+        for button_name in self.available_names:
+            self.set_button_color(button_name, color=color, animation=animation)
         
     def on_midi_message(self, message):
         if message.type == MIDO_CONTROLCHANGE:
