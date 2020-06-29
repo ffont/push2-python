@@ -4,8 +4,8 @@ Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) fro
 
 These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for comunicating with Push 2. I recommend reading Ableton's manual before using this tool.
 
-So far I only implemented some utils to **interface with the display** and some utils for **basic interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
-*EDIT*: customization of color palettes is now implemented!
+So far I only implemented some utils to **interface with the display** and some utils for **interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
+*EDIT*: customization of color palettes and led animations is now implemented!
 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. ~~It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux~~. **UPDATE**: MIDI port names should now be cross-platform, but I have not tested them on Linux/Windows.
 
@@ -154,6 +154,21 @@ All pads support RGB colors, and some buttons do as well. However, some buttons 
 [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#23-midi-mapping) to see which buttons support RGB and which ones only support black and white. In both cases colors are set using the same method, but the list of available colors for black and white buttons is restricted.
 
 For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). First item of each color entry corresponds to the RGB color name while second item corresponds to the BW color name. The color palette can be customized using the `set_color_palette_entry`, `update_rgb_color_palette_entry` and `reapply_color_palette` of Push2 object. See the documentation of these methods for more details.
+
+
+### Set pad and button animations
+
+Animations (e.g. led blinking) can be configured similarly to colors. To configiure an animation you need to define the *starting color* by sending a "set color" message with an animation code corresponding to "static", and then set the *second color* by sending another "set color" message with an animation code corresponding to the desired animation. For example, to condfigure the
+play button with a pulsing animation from white to green:
+
+```python
+push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'white')
+push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green', animation=push2_python.constants.ANIMATION_PULSING_QUARTER)
+```
+
+By default, animations are synced to a clock of 120bpm. It is possible to change that tempo by sending MIDI clock messages to the Push2 device, but `push2-python` currently does not support that. Should be easy to implement though by sending MIDI clock messages using the `push.send_midi_to_push(msg)` method.
+
+For a list of available animations, check the variables names `ANIMATION_*` dictionary in [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py). Also, see the animations section of the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#268-led-animation) for more information about animations.
 
 
 ### Adjust pad sensitivity

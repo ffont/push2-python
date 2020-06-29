@@ -117,16 +117,23 @@ DEFAULT_BW_COLOR = 127
 # Because push2-python does not send MIDI clock messages to push, all animations will run synced to a 120bpm tempo
 # See https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#268-led-animation
 # for more info on what animation names mean
-ANIMATIONS = { 
-    'static': 1,
-    'pulsing_slow': 10,
-    'pulsing': 9,
-    'pulsing_fast': 8,
-    'blinking_slow': 15,
-    'blinking': 14,
-    'blinking_fast': 13
-}
-ANIMATIONS_DEFAULT = 1
+ANIMATION_STATIC = 0
+ANIMATION_ONESHOT_24TH = 1
+ANIMATION_ONESHOT_16TH = 2
+ANIMATION_ONESHOT_8TH = 3
+ANIMATION_ONESHOT_QUARTER = 4
+ANIMATION_ONESHOT_HALF = 5
+ANIMATION_PULSING_24TH = 6
+ANIMATION_PULSING_16TH = 7
+ANIMATION_PULSING_8TH = 8
+ANIMATION_PULSING_QUARTER = 9
+ANIMATION_PULSING_HALF = 10
+ANIMATION_BLINKING_24TH = 11
+ANIMATION_BLINKING_16TH = 12
+ANIMATION_BLINKING_8TH = 13
+ANIMATION_BLINKING_QUARTER = 14
+ANIMATION_BLINKING_HALF = 15
+ANIMATION_DEFAULT = ANIMATION_STATIC
 
 # Push2 actions
 ACTION_PAD_PRESSED = 'on_pad_pressed'
