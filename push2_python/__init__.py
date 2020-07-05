@@ -37,7 +37,7 @@ class Push2(object):
     pads = None
     buttons = None
     encoders = None
-    touchtrip = None
+    touchstrip = None
     use_user_midi_port = False
     last_active_sensing_received = None
     function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
@@ -64,7 +64,7 @@ class Push2(object):
         self.pads = Push2Pads(self)
         self.buttons = Push2Buttons(self)
         self.encoders = Push2Encoders(self)
-        self.touchtrip = Push2TouchStrip(self)
+        self.touchstrip = Push2TouchStrip(self)
 
         # Initialize MIDI IN connection with push
         self.configure_midi(skip_midi_out=True)
@@ -219,7 +219,7 @@ class Push2(object):
                 # are not interested in (probably some internal state which Ableton uses but we don't care about?)
                 
                 # Send received message to each "part" so it is processes accordingly
-                for func in [self.pads.on_midi_message, self.buttons.on_midi_message, self.encoders.on_midi_message, self.touchtrip.on_midi_message]:
+                for func in [self.pads.on_midi_message, self.buttons.on_midi_message, self.encoders.on_midi_message, self.touchstrip.on_midi_message]:
                     action_taken = func(message)
                     if action_taken:
                         break  # Early return from for loop to avoid running unnecessary checks
@@ -447,7 +447,13 @@ def on_button_released(button_name=None):
 
 
 def on_touchstrip():
-    """Shortcut for registering handlers for ACTION_TOUCHSTRIP_TOUCHED events.
+    """Shortcut for registering handlers for ACTION_TOUCHSTRIP_TOUCHED events. Push2's 
+    touchstrip can be configured to work eithher as a pitch bend "wheel" (the default)
+    or as a modualtion "wheel". When configured as pitch bend, the touchstrip values received
+    in this method (see below) will correspond to pitch bend values [-8192, 8128]. If configured as
+    modulation wheel, this function will receive the value of the modulation [0, 127]. Both
+    modes can be configured by calling "set_modulation_wheel_mode" or "set_pitch_bend_mode" methods
+    in Push2.touchstrip.
     Functions decorated with this decorator will be called with the following positional
     arguments:
         * Push2 object instance

@@ -5,9 +5,11 @@ Utils to interface with [Ableton's Push 2](https://www.ableton.com/en/push/) fro
 These utils follow Ableton's [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc) for comunicating with Push 2. I recommend reading Ableton's manual before using this tool.
 
 So far I only implemented some utils to **interface with the display** and some utils for **interaction with pads, buttons, encoders and the touchstrip**. More detailed interaction with each of these elements (e.g. changing color palettes, support for led blinking, advanced touchstrip configuration, etc.) has not been implemented. Contributions are welcome :)
-*EDIT*: customization of color palettes and led animations is now implemented!
+**UPDATE**: customization of color palettes and led animations is now implemented!
 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. ~~It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux~~. **UPDATE**: MIDI port names should now be cross-platform, but I have not tested them on Linux/Windows.
+
+Code examples are shown at the end of this readme file. For an example of a full application that I built using `push2-python` and that allows you to turn your Push2 into a standalone MIDI controller (using a Rapsberry Pi!), check the [Pysha](https://github.com/ffont/pysha) source source code repository.
 
 
 ## Table of Contents
@@ -83,7 +85,7 @@ MIDI configuration calls happen in the same thread because of limitations of the
 
 ### Setting action handlers for buttons, encoders, pads and the touchstrip
 
-You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchtrip are used. You do that by **decorating functions** that will be triggered in response to the physical actions. For example, you can set up an action handler that will be triggered when
+You can easily set action handlers that will trigger functions when the physical pads, buttons, encoders or the touchstrip are used. You do that by **decorating functions** that will be triggered in response to the physical actions. For example, you can set up an action handler that will be triggered when
 the left-most encoder is rotated in this way:
 
 ```python

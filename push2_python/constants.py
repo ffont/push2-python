@@ -64,7 +64,7 @@ MIDO_NOTEON = 'note_on'
 MIDO_NOTEOFF = 'note_off'
 MIDO_POLYAT = 'polytouch'
 MIDO_AFTERTOUCH = 'aftertouch'
-MIDI_PITCWHEEL = 'pitchwheel'
+MIDO_PITCWHEEL = 'pitchwheel'
 MIDO_CONTROLCHANGE = 'control_change'
 
 PUSH2_SYSEX_PREFACE_BYTES = [0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01]
