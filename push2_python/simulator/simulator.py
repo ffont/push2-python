@@ -52,7 +52,7 @@ class SimulatorController(object):
     def set_color_palette(self, new_color_palette):
         self.color_palette = new_color_palette
 
-    def set_element_color(self, midiTrigger, color_idx):
+    def set_element_color(self, midiTrigger, color_idx, animation_idx):
         rgb, bw_rgb = self.color_palette.get(color_idx, [(255, 255, 255), (255, 255, 255)])
         if rgb is None:
             rgb = (255, 255, 255)
@@ -60,7 +60,7 @@ class SimulatorController(object):
             bw_rgb = (255, 255, 255)
         if client_connected:
             try:
-                emit('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb})
+                emit('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb, 'blink': animation_idx != 0})
             except RuntimeError:
                 pass
 
@@ -83,6 +83,7 @@ def test_connect():
     global client_connected
     client_connected = True
     print('Client connected')
+    push_object.opn
 
 
 @sim_app.on('disconnect')

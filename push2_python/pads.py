@@ -118,7 +118,7 @@ class Push2Pads(AbstractPush2Section):
         self.current_pads_state[pad] = {'color': color, 'animation': animation}
 
         if self.push.simulator_controller is not None:
-            self.push.simulator_controller.set_element_color('nn' + str(pad), color)
+            self.push.simulator_controller.set_element_color('nn' + str(pad), color, animation)
 
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
