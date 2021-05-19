@@ -53,7 +53,7 @@ class Push2Buttons(AbstractPush2Section):
             self.push.send_midi_to_push(msg)
 
             if self.push.simulator_controller is not None:
-                self.push.simulator_controller.set_element_color('cc' + str(button_n), color)
+                self.push.simulator_controller.set_element_color('cc' + str(button_n), color_idx)
 
     def set_all_buttons_color(self, color='white', animation=ANIMATION_DEFAULT):
         """Sets the color of all buttons in Push2 to the given color.

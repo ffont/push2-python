@@ -3,17 +3,16 @@
         <title>push2-python simulator</title>
         <style>
             .button {
-                width: 30px;
-                height: 30px;
+                width: 51px;
+                height: 51px;
                 border: 1px solid black;
-                background-color: rgb(201, 201, 201);
                 margin: 2px;
                 display: inline-block;
             }
 
             .pad {
-                width: 40px;
-                height: 30px;
+                width: 64px;
+                height: 51px;
                 border: 1px solid black;
                 margin: 2px;
                 display: inline-block;
@@ -21,8 +20,20 @@
 
             .separator {
                 width: 10px;
-                height: 30px;
+                height: 51px;
                 display: inline-block;
+            }
+
+            #display {
+                width: 554px;
+                height: 92px;
+                margin: 2px;
+                border: 1px solid black;
+            }
+
+            #displayImg {
+                height: 100%;
+                width: 100%;
             }
 
         </style>
@@ -43,6 +54,12 @@
                         element.style.backgroundColor = 'rgb(' + data.bwRgb[0] + ',' + data.bwRgb[1] + ',' + data.bwRgb[2] + ')';
                     }
                 }
+            });
+
+            socket.on('setDisplay', (data) => {
+                var element = document.getElementById("displayImg");
+                element.src = data.base64Image;
+                console.log("hey")
             });
 
             function createSeparator(n) {
@@ -104,12 +121,16 @@
 
             document.addEventListener("DOMContentLoaded", () => {
                 build_ui();
+                setInterval(() => {
+                    socket.emit('getNewDisplayImage');
+                }, 500);
             });
 
         </script>
     </head>
     <body>
         <h1>push2-python simulator</h1>
+        <div id="display"><img id="displayImg" /></div>
         <div id="uiWrapper"></div>
     </body>
 </html>

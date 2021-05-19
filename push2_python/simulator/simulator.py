@@ -3,12 +3,19 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from threading import Thread
 import mido
+import base64
+from PIL import Image
+from io import BytesIO
+import time
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'uP3jUqqye3'
 sim_app = SocketIO(app) # logger=True, engineio_logger=True
-push_object = None
 
+push_object = None
+client_connected = False
+latest_prepared_base64_image_to_send = None
 
 default_color_palette = {
     0: [(0, 0, 0), (0 ,0 ,0)],
@@ -37,32 +44,55 @@ def make_midi_message_from_midi_trigger(midi_trigger, releasing=False):
 
 class SimulatorController(object):
 
+    next_frame = None
     color_palette = default_color_palette
+    last_time_frame_prepared = 0
 
     def set_color_palette(self, new_color_palette):
         self.color_palette = new_color_palette
 
     def set_element_color(self, midiTrigger, color_idx):
-        rgb, bw_rgb = default_color_palette.get(color_idx, [(255, 255, 255), (255, 255, 255)])
+        rgb, bw_rgb = self.color_palette.get(color_idx, [(255, 255, 255), (255, 255, 255)])
         if rgb is None:
             rgb = (255, 255, 255)
         if bw_rgb is None:
             bw_rgb = (255, 255, 255)
-        try:
-            emit('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb})
-        except RuntimeError:
-            # Client not yet connected...
-            pass
+        if client_connected:
+            try:
+                emit('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb})
+            except RuntimeError:
+                pass
 
+    def prepare_next_frame_for_display(self, frame):
+        global latest_prepared_base64_image_to_send
+        
+        # 'frame' expects same format as in push.display.display_frame
+        if time.time() - self.last_time_frame_prepared > 0.1:  # Limit fps to save recources
+            self.last_time_frame_prepared = time.time()
+            img = Image.fromarray(frame.transpose(), 'I;16')
+            buffered = BytesIO()
+            img.save(buffered, format="png")
+            base64Image = 'data:image/png;base64, ' + str(base64.b64encode(buffered.getvalue()))[2:-1]
+            latest_prepared_base64_image_to_send = base64Image
+                
 
 @sim_app.on('connect')
 def test_connect():
+    global client_connected
+    client_connected = True
     print('Client connected')
 
 
 @sim_app.on('disconnect')
 def test_disconnect():
+    global client_connected
+    client_connected = False
     print('Client disconnected')
+
+
+@sim_app.on('getNewDisplayImage')
+def get_new_display_image():
+    emit('setDisplay', {'base64Image': latest_prepared_base64_image_to_send})
 
 
 @sim_app.on('padPressed')

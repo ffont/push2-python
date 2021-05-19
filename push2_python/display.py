@@ -198,6 +198,9 @@ class Push2Display(AbstractPush2Section):
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
         self.send_to_display(self.prepare_frame(frame, input_format=input_format))
 
+        if self.push.simulator_controller is not None:
+            self.push.simulator_controller.prepare_next_frame_for_display(frame)
+
 
     def display_prepared_frame(self, prepared_frame):
         self.send_to_display(prepared_frame)
