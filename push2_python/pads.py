@@ -90,7 +90,6 @@ class Push2Pads(AbstractPush2Section):
             msg = mido.Message.from_bytes(PUSH2_SYSEX_PREFACE_BYTES + [0x20] + [start_index] + velocities[start_index:start_index + 16] + PUSH2_SYSEX_END_BYTES)
             self.push.send_midi_to_push(msg)
 
-
     def pad_ij_to_pad_n(self, i, j):
         return pad_ij_to_pad_n(i, j)
 
@@ -117,6 +116,10 @@ class Push2Pads(AbstractPush2Section):
         msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=animation)
         self.push.send_midi_to_push(msg)
         self.current_pads_state[pad] = {'color': color, 'animation': animation}
+
+        if self.push.simulator_controller is not None:
+            self.push.simulator_controller.set_element_color('nn' + str(pad), color)
+
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.

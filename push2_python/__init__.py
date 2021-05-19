@@ -21,6 +21,8 @@ from .constants import is_push_midi_in_port_name, is_push_midi_out_port_name, PU
     ACTION_DISPLAY_DISCONNECTED, ACTION_MIDI_CONNECTED, ACTION_MIDI_DISCONNECTED, PUSH2_MIDI_ACTIVE_SENSING_MAX_INTERVAL, ACTION_SUSTAIN_PEDAL, \
     MIDO_CONTROLCHANGE, PUSH2_SYSEX_PREFACE_BYTES, PUSH2_SYSEX_END_BYTES, DEFAULT_COLOR_PALETTE, DEFAULT_RGB_COLOR, DEFAULT_BW_COLOR
 
+from .simulator.simulator import start_simulator
+
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
 action_handler_registry = defaultdict(list)
@@ -42,9 +44,10 @@ class Push2(object):
     last_active_sensing_received = None
     function_call_interval_limit_overwrite = PUSH2_RECONNECT_INTERVAL
     color_palette = DEFAULT_COLOR_PALETTE.copy()
+    simulator_controller = None
 
 
-    def __init__(self, use_user_midi_port=False):
+    def __init__(self, use_user_midi_port=False, run_simulator=False):
         """Initializes object to interface with Ableton's Push2.
         This function will set up USB and MIDI connections with the hardware device.
         By default, MIDI connection will use LIVE MIDI port instead of USER MIDI port.
@@ -100,10 +103,12 @@ class Push2(object):
         self.f_stop = threading.Event()
         check_active_sensing(self.f_stop)
 
+        # Initialize simulator (if requested)
+        if run_simulator:
+            self.simulator_controller = start_simulator(self)
 
     def stop_active_sensing_thread(self):
         self.f_stop.set()
-
 
     def set_push2_reconnect_call_interval(self, new_interval):
         self.function_call_interval_limit_overwrite = new_interval

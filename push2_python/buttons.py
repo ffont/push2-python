@@ -52,6 +52,9 @@ class Push2Buttons(AbstractPush2Section):
             msg = mido.Message(MIDO_CONTROLCHANGE, control=button_n, value=color_idx, channel=animation)
             self.push.send_midi_to_push(msg)
 
+            if self.push.simulator_controller is not None:
+                self.push.simulator_controller.set_element_color('cc' + str(button_n), color)
+
     def set_all_buttons_color(self, color='white', animation=ANIMATION_DEFAULT):
         """Sets the color of all buttons in Push2 to the given color.
         'color' must be a valid RGB or BW color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.

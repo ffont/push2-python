@@ -1,6 +1,31 @@
 <html>
     <head>
         <title>push2-python simulator</title>
+        <style>
+            .button {
+                width: 30px;
+                height: 30px;
+                border: 1px solid black;
+                background-color: rgb(201, 201, 201);
+                margin: 2px;
+                display: inline-block;
+            }
+
+            .pad {
+                width: 40px;
+                height: 30px;
+                border: 1px solid black;
+                margin: 2px;
+                display: inline-block;
+            }
+
+            .separator {
+                width: 10px;
+                height: 30px;
+                display: inline-block;
+            }
+
+        </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
         <script type="text/javascript" charset="utf-8">
             var socket = io();
@@ -9,18 +34,82 @@
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
             
-            socket.on('my response', (elem1, elem2, elem3) => {
-                console.log(elem1, elem2, elem3);
+            socket.on('setElementColor', (data) => {
+                var element = document.getElementById(data.midiTrigger);
+                if (element !== null){
+                    if (element.dataset.rgb){
+                        element.style.backgroundColor = 'rgb(' + data.rgb[0] + ',' + data.rgb[1] + ',' + data.rgb[2] + ')';
+                    } else {
+                        element.style.backgroundColor = 'rgb(' + data.bwRgb[0] + ',' + data.bwRgb[1] + ',' + data.bwRgb[2] + ')';
+                    }
+                }
             });
 
-            function test_ws(){
-                socket.emit('my_event', 1, 3, "four");
+            function createSeparator(n) {
+                var element = document.createElement('div');
+                element.classList.add('separator');
+                return element;
             }
+
+            function createPad(i, j) {
+                var element = document.createElement('div');
+                element.classList.add('pad');
+                element.dataset.rgb = true;
+                element.dataset.midiTrigger = 'nn' + ((92 + j) - i * 8).toString();
+                element.id = element.dataset.midiTrigger;
+                element.title = element.dataset.midiTrigger;
+                element.addEventListener('mousedown', () => {
+                    socket.emit('padPressed', element.dataset.midiTrigger);
+                });
+                element.addEventListener('mouseup', () => {
+                    socket.emit('padReleased', element.dataset.midiTrigger);
+                });
+                return element;
+            }
+
+            function createRgbButton(i){
+                var element = document.createElement('div');
+                element.classList.add('button');
+                element.dataset.rgb = true;
+                element.dataset.midiTrigger = 'cc' + (43 - i).toString();
+                element.id = element.dataset.midiTrigger;
+                element.title = element.dataset.midiTrigger;
+                element.addEventListener('mousedown', () => {
+                    socket.emit('buttonPressed', element.dataset.midiTrigger);
+                });
+                element.addEventListener('mouseup', () => {
+                    socket.emit('buttonReleased', element.dataset.midiTrigger);
+                });
+                return element;
+            }
+
+            function build_ui() {
+                var uiWrapper = document.getElementById('uiWrapper');
+
+                // Pads and scene trigger buttons
+                for (var i=0; i<8; i++){
+                    var padsRow = document.createElement('div');
+                    padsRow.classList.add('padsRow');
+                    for (var j=0; j<9; j++){
+                        if (j<8){
+                            padsRow.appendChild(createPad(i , j));
+                        } else {
+                            padsRow.appendChild(createSeparator());
+                            padsRow.appendChild(createRgbButton(i , j));
+                        }
+                    }   
+                    uiWrapper.appendChild(padsRow); 
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                build_ui();
+            });
+
         </script>
     </head>
     <body>
         <h1>push2-python simulator</h1>
-        <button onclick="test_ws();">Test ws</button>
-
+        <div id="uiWrapper"></div>
     </body>
 </html>
