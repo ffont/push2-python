@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <title>push2-python simulator</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+        <script type="text/javascript" charset="utf-8">
+            var socket = io();
+            
+            socket.on('connect', () => {
+                socket.emit('my event', {data: 'I\'m connected!'});
+            });
+            
+            socket.on('my response', (elem1, elem2, elem3) => {
+                console.log(elem1, elem2, elem3);
+            });
+
+            function test_ws(){
+                socket.emit('my_event', 1, 3, "four");
+            }
+        </script>
+    </head>
+    <body>
+        <h1>push2-python simulator</h1>
+        <button onclick="test_ws();">Test ws</button>
+
+    </body>
+</html>
