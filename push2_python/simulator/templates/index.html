@@ -3,25 +3,83 @@
         <title>push2-python simulator</title>
         <style>
             .button {
-                width: 51px;
-                height: 51px;
+                width: 44px;
+                height: 44px;
                 border: 1px solid black;
                 margin: 2px;
                 display: inline-block;
+                font-size: 10px;
+            }
+
+            .button2 {
+                width: 44px;
+                height: 38px;
+                border: 1px solid black;
+                margin: 2px;
+                display: inline-block;
+                font-size: 10px;
+            }
+
+            .buttonLong {
+                width: 64px;
+                height: 26px;
+                border: 1px solid black;
+                margin: 2px;
+                display: inline-block;
+                font-size: 10px;
+            }
+
+            .buttonLong2 {
+                width: 44px;
+                height: 26px;
+                border: 1px solid black;
+                margin: 2px;
+                display: inline-block;
+                font-size: 10px;
+            }
+
+            .buttonLong3 {
+                width: 40px;
+                height: 26px;
+                border: 1px solid black;
+                margin: 2px;
+                display: inline-block;
+                font-size: 10px;
             }
 
             .pad {
                 width: 64px;
-                height: 51px;
+                height: 44px;
                 border: 1px solid black;
                 margin: 2px;
                 display: inline-block;
+                font-size: 10px;
             }
 
             .separator {
                 width: 10px;
-                height: 51px;
+                height: 10px;
                 display: inline-block;
+            }
+
+            .separatorLong {
+                width: 10px;
+                height: 78px;
+                display: inline-block;
+            }
+
+            .column {
+                display: inline-block;
+                max-width: 60px;
+            }
+
+            .columnNoInline {
+                max-width: 60px;
+            }
+            
+            .verticalPart {
+                display: inline-block;
+                vertical-align: top;
             }
 
             #display {
@@ -29,6 +87,9 @@
                 height: 92px;
                 margin: 2px;
                 border: 1px solid black;
+                display: inline-block;
+                vertical-align: top;
+                margin-top:3px;
             }
 
             #displayImg {
@@ -59,17 +120,17 @@
             socket.on('setDisplay', (data) => {
                 var element = document.getElementById("displayImg");
                 element.src = data.base64Image;
-                console.log("hey")
             });
 
-            function createSeparator(n) {
+            function createDivWithClass(className) {
                 var element = document.createElement('div');
-                element.classList.add('separator');
+                element.classList.add(className);
                 return element;
             }
 
             function createPad(i, j) {
                 var element = document.createElement('div');
+                element.innerHTML = "&nbsp;";
                 element.classList.add('pad');
                 element.dataset.rgb = true;
                 element.dataset.midiTrigger = 'nn' + ((92 + j) - i * 8).toString();
@@ -84,11 +145,16 @@
                 return element;
             }
 
-            function createRgbButton(i){
+            function createButton(ccNumber, className, rgb, name){
                 var element = document.createElement('div');
-                element.classList.add('button');
+                if (name !== undefined){
+                    element.innerHTML = "&nbsp;" + name;
+                } else {
+                    element.innerHTML = "&nbsp;";
+                }
+                element.classList.add(className);
                 element.dataset.rgb = true;
-                element.dataset.midiTrigger = 'cc' + (43 - i).toString();
+                element.dataset.midiTrigger = 'cc' + ccNumber.toString();
                 element.id = element.dataset.midiTrigger;
                 element.title = element.dataset.midiTrigger;
                 element.addEventListener('mousedown', () => {
@@ -103,34 +169,193 @@
             function build_ui() {
                 var uiWrapper = document.getElementById('uiWrapper');
 
-                // Pads and scene trigger buttons
+                // Left-side part ---------------------------------------
+                var leftSidePart = document.createElement('div');
+                leftSidePart.classList.add('verticalPart');
+
+                // TODO: encoders
+                
+                var row = document.createElement('div');
+                row.appendChild(createButton(3, "buttonLong", false, "Tap tempo"));
+                row.appendChild(createButton(9, "buttonLong", false, "Metronome"));
+                leftSidePart.appendChild(row)
+
+                leftSidePart.appendChild(createDivWithClass('separator'));
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(118, "button", false, "Delete"));
+                leftSidePart.appendChild(row)
+                var row = document.createElement('div');
+                row.appendChild(createButton(119, "button", false, "Undo"));
+                leftSidePart.appendChild(row)
+
+                leftSidePart.appendChild(createDivWithClass('separator'));
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(60, "buttonLong3", false, "Mute"));
+                row.appendChild(createButton(61, "buttonLong3", false, "Solo"));
+                row.appendChild(createButton(29, "buttonLong3", false, "Stop"));
+                leftSidePart.appendChild(row)
+
+                leftSidePart.appendChild(createDivWithClass('separator'));
+
+                var column = document.createElement('div');
+                column.classList.add('columnNoInline');
+                column.appendChild(createButton(35 , "button2", false, "Convert"));
+                column.appendChild(createButton(117 , "button2", false, "Double"));
+                column.appendChild(createButton(116 , "button2", false, "Quantize"));
+                column.appendChild(createButton(88 , "button2", false, "Duplicate"));
+                column.appendChild(createButton(87 , "button2", false, "New"));
+                column.appendChild(createButton(90 , "button2", false, "Fixed"));
+                column.appendChild(createButton(89 , "button2", true, "Automate"));
+                column.appendChild(createButton(86 , "button2", true, "Record"));
+                column.appendChild(createButton(85 , "button", true, "Play"));
+                leftSidePart.appendChild(column);
+                
+                uiWrapper.appendChild(leftSidePart);
+                uiWrapper.appendChild(createDivWithClass('separator'));
+
+                // Middle part ---------------------------------------
+                var middlePart = document.createElement('div');
+                middlePart.classList.add('verticalPart');
+
+                // TODO: encoders
+
+                // Upper buttons
+                var row = document.createElement('div');
                 for (var i=0; i<8; i++){
-                    var padsRow = document.createElement('div');
-                    padsRow.classList.add('padsRow');
+                    row.appendChild(createButton(102 + i , "buttonLong", true));
+                }
+                middlePart.appendChild(row);
+                middlePart.appendChild(createDivWithClass('separator'));
+
+                // Display
+                var row = document.createElement('div');
+                var display = document.createElement('div');
+                display.id = 'display'
+                var displayImg = document.createElement('img');
+                displayImg.id = 'displayImg'
+                display.appendChild(displayImg);
+                row.appendChild(display);
+                row.appendChild(createDivWithClass('separator'));
+                
+                // Buttons right of display
+                var column = document.createElement('div');
+                column.classList.add('column');
+                column.appendChild(createButton(52 , "button", false, "Add dev"));
+                column.appendChild(createButton(53 , "button", false, "Add tr"));
+                row.appendChild(column);
+                
+                middlePart.appendChild(row);
+                middlePart.appendChild(createDivWithClass('separator'));
+
+                // Lower buttons
+                var row = document.createElement('div');
+                for (var i=0; i<9; i++){
+                    if (i<8){
+                        row.appendChild(createButton(20 + i , "buttonLong", true));
+                    } else {
+                        row.appendChild(createDivWithClass('separator'));
+                        row.appendChild(createButton(28 , "buttonLong2", false, "Master"));
+                    }
+                }
+                middlePart.appendChild(row);
+                middlePart.appendChild(createDivWithClass('separator'));
+
+                // Pads and scene buttons
+                for (var i=0; i<8; i++){
+                    var row = document.createElement('div');
                     for (var j=0; j<9; j++){
                         if (j<8){
-                            padsRow.appendChild(createPad(i , j));
+                            row.appendChild(createPad(i , j));
                         } else {
-                            padsRow.appendChild(createSeparator());
-                            padsRow.appendChild(createRgbButton(i , j));
+                            row.appendChild(createDivWithClass('separator'));
+                            row.appendChild(createButton(43 - i , "button", true));
                         }
                     }   
-                    uiWrapper.appendChild(padsRow); 
+                    middlePart.appendChild(row); 
                 }
+                uiWrapper.appendChild(middlePart);
+
+                // Right-side part ---------------------------------------
+                var rightSidePart = document.createElement('div');
+                rightSidePart.classList.add('verticalPart');
+
+                // TODO: encoders
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(30, "buttonLong2", false, "Setup"));
+                row.appendChild(createButton(59, "buttonLong2", false, "User"));
+                rightSidePart.appendChild(row)
+
+                rightSidePart.appendChild(createDivWithClass('separator'));
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(110, "button", false, "Device"));
+                row.appendChild(createButton(112, "button", false, "Mix"));
+                rightSidePart.appendChild(row)
+                var row = document.createElement('div');
+                row.appendChild(createButton(111, "button", false, "Browse"));
+                row.appendChild(createButton(113, "button", false, "Clip"));
+                rightSidePart.appendChild(row)
+
+                rightSidePart.appendChild(createDivWithClass('separator'));
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(44, "button", false, "Left"));
+                row.appendChild(createButton(46, "button", false, "Up"));
+                rightSidePart.appendChild(row)
+                var row = document.createElement('div');
+                row.appendChild(createButton(47, "button", false, "Down"));
+                row.appendChild(createButton(45, "button", false, "Right"));
+                rightSidePart.appendChild(row)
+
+                rightSidePart.appendChild(createDivWithClass('separatorLong'));
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(56, "button", false, "Repeat"));
+                row.appendChild(createButton(57, "button", false, "Accent"));
+                rightSidePart.appendChild(row)
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(58, "buttonLong2", false, "Scale"));
+                row.appendChild(createButton(31, "buttonLong2", false, "Layout"));
+                rightSidePart.appendChild(row)
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(50, "button", false, "Note"));
+                row.appendChild(createButton(51, "button", false, "Session"));
+                rightSidePart.appendChild(row)
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(62, "button", false, "Page l"));
+                row.appendChild(createButton(55, "button", false, "Oct up"));
+                rightSidePart.appendChild(row)
+                var row = document.createElement('div');
+                row.appendChild(createButton(54, "button", false, "Oct do"));
+                row.appendChild(createButton(63, "button", false, "Page r"));
+                rightSidePart.appendChild(row)
+
+                var row = document.createElement('div');
+                row.appendChild(createButton(49, "buttonLong2", false, "Shift"));
+                row.appendChild(createButton(48, "buttonLong2", false, "Select"));
+                rightSidePart.appendChild(row)
+
+                uiWrapper.appendChild(rightSidePart);
             }
 
             document.addEventListener("DOMContentLoaded", () => {
                 build_ui();
                 setInterval(() => {
                     socket.emit('getNewDisplayImage');
-                }, 500);
+                }, 50);
             });
 
         </script>
     </head>
     <body>
         <h1>push2-python simulator</h1>
-        <div id="display"><img id="displayImg" /></div>
-        <div id="uiWrapper"></div>
+        <div id="uiWrapper">
+        </div>
     </body>
 </html>

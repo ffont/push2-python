@@ -16,6 +16,7 @@ sim_app = SocketIO(app) # logger=True, engineio_logger=True
 push_object = None
 client_connected = False
 latest_prepared_base64_image_to_send = None
+latest_prepared_image_sent = False
 
 default_color_palette = {
     0: [(0, 0, 0), (0 ,0 ,0)],
@@ -64,16 +65,17 @@ class SimulatorController(object):
                 pass
 
     def prepare_next_frame_for_display(self, frame):
-        global latest_prepared_base64_image_to_send
+        global latest_prepared_base64_image_to_send, latest_prepared_image_sent
         
         # 'frame' expects same format as in push.display.display_frame
-        if time.time() - self.last_time_frame_prepared > 0.1:  # Limit fps to save recources
+        if time.time() - self.last_time_frame_prepared > 1.0/5.0:  # Limit fps to save recources
             self.last_time_frame_prepared = time.time()
             img = Image.fromarray(frame.transpose(), 'I;16')
             buffered = BytesIO()
             img.save(buffered, format="png")
             base64Image = 'data:image/png;base64, ' + str(base64.b64encode(buffered.getvalue()))[2:-1]
             latest_prepared_base64_image_to_send = base64Image
+            latest_prepared_image_sent = False
                 
 
 @sim_app.on('connect')
@@ -92,8 +94,11 @@ def test_disconnect():
 
 @sim_app.on('getNewDisplayImage')
 def get_new_display_image():
-    emit('setDisplay', {'base64Image': latest_prepared_base64_image_to_send})
-
+    global latest_prepared_image_sent
+    if not latest_prepared_image_sent:
+        emit('setDisplay', {'base64Image': latest_prepared_base64_image_to_send})
+        latest_prepared_image_sent = True
+    
 
 @sim_app.on('padPressed')
 def pad_pressed(midiTrigger):
