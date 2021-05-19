@@ -31,8 +31,8 @@ default_color_palette = {
     123: [(192, 192, 192), None],
     124: [(128, 128, 128), None],
     125: [(0, 0, 255), None],
-    126: [(0,255, 0), None],
-    127: [(255, 0, 0), (0, 0, 0)]
+    126: [(0, 255, 0), None],
+    127: [(255, 0, 0), (255, 255, 255)]
 }
 
 def make_midi_message_from_midi_trigger(midi_trigger, releasing=False):

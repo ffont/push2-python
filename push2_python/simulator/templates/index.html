@@ -2,10 +2,20 @@
     <head>
         <title>push2-python simulator</title>
         <style>
+            body {
+                font-family: Helvetica, Sans-Serif;
+                color: rgb(116, 116, 116);
+                background-color: #000;
+                -moz-user-select: none;
+                -khtml-user-select: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+
             .button {
                 width: 44px;
                 height: 44px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -14,7 +24,7 @@
             .button2 {
                 width: 44px;
                 height: 38px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -23,7 +33,7 @@
             .buttonLong {
                 width: 64px;
                 height: 26px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -32,7 +42,7 @@
             .buttonLong2 {
                 width: 44px;
                 height: 26px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -41,7 +51,7 @@
             .buttonLong3 {
                 width: 40px;
                 height: 26px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -50,7 +60,7 @@
             .pad {
                 width: 64px;
                 height: 44px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
@@ -64,7 +74,7 @@
 
             .separatorLong {
                 width: 10px;
-                height: 78px;
+                height: 77px;
                 display: inline-block;
             }
 
@@ -86,7 +96,7 @@
                 width: 554px;
                 height: 92px;
                 margin: 2px;
-                border: 1px solid black;
+                border: 1px solid rgb(116, 116, 116);
                 display: inline-block;
                 vertical-align: top;
                 margin-top:3px;
@@ -108,11 +118,20 @@
             
             socket.on('setElementColor', (data) => {
                 var element = document.getElementById(data.midiTrigger);
+                var elementIsButton = data.midiTrigger.indexOf('cc') > -1;
                 if (element !== null){
-                    if (element.dataset.rgb){
-                        element.style.backgroundColor = 'rgb(' + data.rgb[0] + ',' + data.rgb[1] + ',' + data.rgb[2] + ')';
+                    if (element.dataset.rgb === "true"){
+                        if (elementIsButton){
+                            element.style.color = 'rgb(' + data.rgb[0] + ',' + data.rgb[1] + ',' + data.rgb[2] + ')';
+                        } else {
+                            element.style.backgroundColor = 'rgb(' + data.rgb[0] + ',' + data.rgb[1] + ',' + data.rgb[2] + ')';
+                        }
                     } else {
-                        element.style.backgroundColor = 'rgb(' + data.bwRgb[0] + ',' + data.bwRgb[1] + ',' + data.bwRgb[2] + ')';
+                        if (elementIsButton){
+                            element.style.color = 'rgb(' + data.bwRgb[0] + ',' + data.bwRgb[1] + ',' + data.bwRgb[2] + ')';
+                        } else {
+                            element.style.backgroundColor = 'rgb(' + data.bwRgb[0] + ',' + data.bwRgb[1] + ',' + data.bwRgb[2] + ')';
+                        }
                     }
                 }
             });
@@ -153,7 +172,7 @@
                     element.innerHTML = "&nbsp;";
                 }
                 element.classList.add(className);
-                element.dataset.rgb = true;
+                element.dataset.rgb = rgb;
                 element.dataset.midiTrigger = 'cc' + ccNumber.toString();
                 element.id = element.dataset.midiTrigger;
                 element.title = element.dataset.midiTrigger;
@@ -192,9 +211,9 @@
                 leftSidePart.appendChild(createDivWithClass('separator'));
 
                 var row = document.createElement('div');
-                row.appendChild(createButton(60, "buttonLong3", false, "Mute"));
-                row.appendChild(createButton(61, "buttonLong3", false, "Solo"));
-                row.appendChild(createButton(29, "buttonLong3", false, "Stop"));
+                row.appendChild(createButton(60, "buttonLong3", true, "Mute"));
+                row.appendChild(createButton(61, "buttonLong3", true, "Solo"));
+                row.appendChild(createButton(29, "buttonLong3", true, "Stop"));
                 leftSidePart.appendChild(row)
 
                 leftSidePart.appendChild(createDivWithClass('separator'));
@@ -224,7 +243,7 @@
                 // Upper buttons
                 var row = document.createElement('div');
                 for (var i=0; i<8; i++){
-                    row.appendChild(createButton(102 + i , "buttonLong", true));
+                    row.appendChild(createButton(102 + i , "buttonLong", true, "____"));
                 }
                 middlePart.appendChild(row);
                 middlePart.appendChild(createDivWithClass('separator'));
@@ -253,7 +272,7 @@
                 var row = document.createElement('div');
                 for (var i=0; i<9; i++){
                     if (i<8){
-                        row.appendChild(createButton(20 + i , "buttonLong", true));
+                        row.appendChild(createButton(20 + i , "buttonLong", true, "____"));
                     } else {
                         row.appendChild(createDivWithClass('separator'));
                         row.appendChild(createButton(28 , "buttonLong2", false, "Master"));
@@ -270,7 +289,7 @@
                             row.appendChild(createPad(i , j));
                         } else {
                             row.appendChild(createDivWithClass('separator'));
-                            row.appendChild(createButton(43 - i , "button", true));
+                            row.appendChild(createButton(43 - i , "button", true, ">"));
                         }
                     }   
                     middlePart.appendChild(row); 
