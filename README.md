@@ -9,6 +9,8 @@ So far I only implemented some utils to **interface with the display** and some 
 
 I only testd the package in **Python 3** and **macOS**. Some things will not work on Python 2 but it should be easy to port. I don't know how it will work on Windows/Linux. ~~It is possible that MIDI port names (see [push2_python/constants.py](https://github.com/ffont/push2-python/blob/master/push2_python/constants.py#L12-L13)) need to be changed to correctly reach Push2 in Windows/Linux~~. **UPDATE**: MIDI port names should now be cross-platform, but I have not tested them on Linux/Windows.
 
+`push2-python` incorporates a Push2 simulator so you can do development without having your push connected. Check out the [simulator section](#using-the-simulator) below
+
 Code examples are shown at the end of this readme file. For an example of a full application that I built using `push2-python` and that allows you to turn your Push2 into a standalone MIDI controller (using a Rapsberry Pi!), check the [Pysha](https://github.com/ffont/pysha) source source code repository.
 
 
@@ -21,6 +23,7 @@ Code examples are shown at the end of this readme file. For an example of a full
     * [Button names, encoder names, pad numbers and coordinates](#button-names--encoder-names--pad-numbers-and-coordinates)
     * [Set pad and button colors](#set-pad-and-button-colors)
     * [Interface with the display](#interface-with-the-display)
+    * [Using the simulator](#using-the-simulator)
 * [Code examples](#code-examples)
     * [Set up handlers for pads, encoders, buttons and the touchstrip...](#set-up-handlers-for-pads-encoders-buttons-and-the-touchstrip)
     * [Light up buttons and pads](#light-up-buttons-and-pads)
@@ -211,6 +214,34 @@ With `push2_python.constants.FRAME_FORMAT_RGB565` we need to convert the frame t
 **NOTE 1**: According to Push2 display specification, when you send a frame to Push2, it will stay on screen for two seconds. Then the screen will go to black.
 
 **NOTE 2**: Interfacing with the display using `push2-python` won't allow you to get very high frame rates, but it should be enough for most applications. If you need to make more hardcore use of the display you should probably implement your own funcions directly in C or C++. Push2's display theoretically supports up to 60fps. More information in the [Push 2 MIDI and Display Interface Manual](https://github.com/Ableton/push-interface/blob/master/doc/AbletonPush2MIDIDisplayInterface.asc#32-display-interface-protocol).
+
+### Using the simulator
+
+`push2-python` bundles a browser-based Push2 simulator that you can use for doing development while away from your Push. To use the simulator, you just need to initialize `Push2` in the following way:
+
+```
+push = push2_python.Push2(run_simulator=True)
+```
+
+And then, while your app is running, point your browser at `localhost:5000`. Here is a screenshot of the simulator in action:
+
+<p align="center">
+<img src="simulator.png" title="push2-python simulator" />
+</p>
+
+In order to synchronize color palettes between the simulator and push, you need to call the `set_color_palette` of the simulator object (`push.simulator_controller.set_color_palette`) and pass a color palette dictionary with keys being color index (0-127) and each item is a list of two 3-element tuples with the RGB values (0-255) for the corresponding RGB color and black and white to that index. It should look like the following:
+
+```
+{
+    0: [(255, 0, 0), (0 ,0 ,0)],
+    1: [(0, 255, 0), (125 ,125, 125)],
+    2: [(0, 0, 255), (255, 255, 255)],
+    3: [(255, 0, 255), None],
+    ...
+}
+```
+
+In this example the first color index will be red for RGB buttons and black for black and white button. Note that the second "column" should only ocntain grayscale RGB values. `None` values will be converted to "white".
 
 
 ## Code examples

@@ -174,7 +174,7 @@ class Push2Display(AbstractPush2Section):
             try:
                 self.configure_usb_device()
             except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
-                pass#logging.error('Could not initialize Push 2 Display: {0}'.format(e))         
+                logging.error('Could not initialize Push 2 Display: {0}'.format(e))         
 
         if self.usb_endpoint is not None:
             try:
@@ -196,13 +196,15 @@ class Push2Display(AbstractPush2Section):
                 
 
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
-        self.send_to_display(self.prepare_frame(frame, input_format=input_format))
+        prepared_frame = self.prepare_frame(frame, input_format=input_format)
+        self.send_to_display(prepared_frame)
 
         if self.push.simulator_controller is not None:
-            self.push.simulator_controller.prepare_next_frame_for_display(frame)
+            self.push.simulator_controller.prepare_next_frame_for_display(frame, input_format=input_format)
 
 
     def display_prepared_frame(self, prepared_frame):
+        # NOTE that using this method frames won't be shown in the simulator
         self.send_to_display(prepared_frame)
 
 

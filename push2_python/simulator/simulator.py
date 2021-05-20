@@ -8,6 +8,7 @@ from PIL import Image
 from io import BytesIO
 import time
 import random
+import numpy
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'uP3jUqqye3'
@@ -64,13 +65,55 @@ class SimulatorController(object):
             except RuntimeError:
                 pass
 
-    def prepare_next_frame_for_display(self, frame):
+    def prepare_next_frame_for_display(self, frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565):
         global latest_prepared_base64_image_to_send, latest_prepared_image_sent
         
-        # 'frame' expects same format as in push.display.display_frame
+        # 'frame' expects a "frame" as in display.display_frame method
         if time.time() - self.last_time_frame_prepared > 1.0/5.0:  # Limit fps to save recources
             self.last_time_frame_prepared = time.time()
-            img = Image.fromarray(frame.transpose(), 'I;16')
+
+            # We need to convert the frame to RGBA format first (so Pillow can read it later)
+            frame = frame.transpose().flatten()
+            rgb_frame = numpy.zeros(shape=(len(frame), 1), dtype=numpy.uint32).flatten()
+            rgb_frame[:] = frame[:]
+            if input_format == push2_python.constants.FRAME_FORMAT_RGB565:
+                r_filter = int('1111100000000000', 2)
+                g_filter = int('0000011111100000', 2)
+                b_filter = int('0000000000011111', 2)
+                frame_r_filtered = numpy.bitwise_and(rgb_frame, r_filter)
+                frame_r_shifted = numpy.left_shift(frame_r_filtered, 16)  # Shift 16 to left so R starts at bit 32
+                frame_g_filtered = numpy.bitwise_and(rgb_frame, g_filter)
+                frame_g_shifted = numpy.left_shift(frame_g_filtered, 13) # Shift 13 to the left so G start at bit 24
+                frame_b_filtered = numpy.bitwise_and(rgb_frame, b_filter)
+                frame_b_shifted = numpy.left_shift(frame_b_filtered, 11)  # Shift 11 so B starts at bit 16
+                rgb_frame = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
+                rgb_frame = numpy.bitwise_or(rgb_frame, int('00000000000000000000000011111111', 2))  # Set alpha channel to "full!"
+            elif input_format == push2_python.constants.FRAME_FORMAT_BGR565:
+                r_filter = int('0000000000011111', 2)
+                g_filter = int('0000011111100000', 2)
+                b_filter = int('1111100000000000', 2)
+                frame_r_filtered = numpy.bitwise_and(rgb_frame, r_filter)
+                frame_r_shifted = numpy.left_shift(frame_r_filtered, 27)  # Shift 27 to left so R starts at bit 32
+                frame_g_filtered = numpy.bitwise_and(rgb_frame, g_filter)
+                frame_g_shifted = numpy.left_shift(frame_g_filtered, 13)  # Shift 13 to the left so G start at bit 24
+                frame_b_filtered = numpy.bitwise_and(rgb_frame, b_filter)
+                frame_b_shifted = frame_b_filtered  # No shift, B already starts at 16
+                rgb_frame = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
+                rgb_frame = numpy.bitwise_or(rgb_frame, int('00000000000000000000000011111111', 2))  # Set alpha channel to "full!"
+            elif input_format == push2_python.constants.FRAME_FORMAT_RGB:
+                r_filter = int('111111110000000000000000', 2)
+                g_filter = int('000000001111111100000000', 2)
+                b_filter = int('000000000000000011111111', 2)
+                frame_r_filtered = numpy.bitwise_and(rgb_frame, r_filter)
+                frame_r_shifted = numpy.left_shift(frame_r_filtered, 16)  # Shift 16 to left so R starts at bit 32
+                frame_g_filtered = numpy.bitwise_and(rgb_frame, g_filter)
+                frame_g_shifted = numpy.left_shift(frame_g_filtered, 8)  # Shift 8 to the left so G start at bit 24
+                frame_b_filtered = numpy.bitwise_and(rgb_frame, b_filter)
+                frame_b_shifted = frame_b_filtered  # No shift, B already starts at 16
+                rgb_frame = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
+                rgb_frame = numpy.bitwise_or(rgb_frame, int('00000000000000000000000011111111', 2))  # Set alpha channel to "full!"
+                
+            img = Image.frombytes('RGBA', (960, 160), rgb_frame.tobytes())
             buffered = BytesIO()
             img.save(buffered, format="png")
             base64Image = 'data:image/png;base64, ' + str(base64.b64encode(buffered.getvalue()))[2:-1]
