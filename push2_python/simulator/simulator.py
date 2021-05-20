@@ -35,11 +35,11 @@ default_color_palette = {
     127: [(255, 0, 0), (255, 255, 255)]
 }
 
-def make_midi_message_from_midi_trigger(midi_trigger, releasing=False):
+def make_midi_message_from_midi_trigger(midi_trigger, releasing=False, velocity=127, value=127):
     if midi_trigger.startswith('nn'):
-        return mido.Message('note_on' if not releasing else 'note_off', note=int(midi_trigger.replace('nn', '')), velocity=127)
+        return mido.Message('note_on' if not releasing else 'note_off', note=int(midi_trigger.replace('nn', '')), velocity=velocity)
     if midi_trigger.startswith('cc'):
-        return mido.Message('control_change', control=int(midi_trigger.replace('cc', '')), value=127 if not releasing else 0)
+        return mido.Message('control_change', control=int(midi_trigger.replace('cc', '')), value=value if not releasing else 0)
     return None
 
 
@@ -83,7 +83,8 @@ def test_connect():
     global client_connected
     client_connected = True
     print('Client connected')
-    push_object.opn
+    push_object.trigger_action(push2_python.constants.ACTION_MIDI_CONNECTED)
+    push_object.trigger_action(push2_python.constants.ACTION_DISPLAY_CONNECTED)
 
 
 @sim_app.on('disconnect')
@@ -91,6 +92,8 @@ def test_disconnect():
     global client_connected
     client_connected = False
     print('Client disconnected')
+    push_object.trigger_action(push2_python.constants.ACTION_MIDI_DISCONNECTED)
+    push_object.trigger_action(push2_python.constants.ACTION_DISPLAY_DISCONNECTED)
 
 
 @sim_app.on('getNewDisplayImage')
@@ -123,6 +126,24 @@ def button_pressed(midiTrigger):
 def button_released(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger, releasing=True)
     push_object.buttons.on_midi_message(msg)
+
+
+@sim_app.on('encdoerTouched')
+def encoder_pressed(midiTrigger):
+    msg = make_midi_message_from_midi_trigger(midiTrigger, velocity=127)
+    push_object.encoders.on_midi_message(msg)
+
+
+@sim_app.on('encdoerReleased')
+def encoder_released(midiTrigger):
+    msg = make_midi_message_from_midi_trigger(midiTrigger, velocity=0)
+    push_object.encoders.on_midi_message(msg)
+
+
+@sim_app.on('encdoerRotated')
+def encoder_rotated(midiTrigger, value):
+    msg = make_midi_message_from_midi_trigger(midiTrigger, value=value)
+    push_object.encoders.on_midi_message(msg)
 
 
 @app.route('/')

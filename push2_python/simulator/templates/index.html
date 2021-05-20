@@ -19,6 +19,7 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
             }
 
             .button2 {
@@ -28,6 +29,7 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
             }
 
             .buttonLong {
@@ -37,6 +39,7 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
             }
 
             .buttonLong2 {
@@ -46,6 +49,7 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
             }
 
             .buttonLong3 {
@@ -55,6 +59,7 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
             }
 
             .pad {
@@ -64,6 +69,28 @@
                 margin: 2px;
                 display: inline-block;
                 font-size: 10px;
+                cursor: default;
+            }
+
+            .encoder {
+                height: 24px;
+                width: 47px;
+                margin: 2px;
+                display: inline-block;
+                margin-left: 13px;
+                margin-right: 10px;
+                margin-bottom: 15px;
+                cursor: default;
+            }
+
+            .encoderButton {
+                height: 24px;
+                width: 12px;
+                display: inline-block;
+                border: 1px solid rgb(116, 116, 116);
+                font-size: 10px;
+                text-align: center;
+                line-height: 24px;
             }
 
             .separator {
@@ -107,6 +134,10 @@
                 width: 100%;
             }
 
+            #uiWrapper {
+                margin-top: 30px;
+            }
+
             .blink {
                 animation: blinker 1s linear infinite;
             }
@@ -121,6 +152,9 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
         <script type="text/javascript" charset="utf-8">
             var socket = io();
+            const padsCurrentlyPressed = new Set();
+            const buttonsCurrentlyPressed = new Set();
+            const encodersCurrentlyPressed = new Set();
             
             socket.on('connect', () => {
                 socket.emit('my event', {data: 'I\'m connected!'});
@@ -170,11 +204,36 @@
                 element.dataset.midiTrigger = 'nn' + ((92 + j) - i * 8).toString();
                 element.id = element.dataset.midiTrigger;
                 element.title = element.dataset.midiTrigger;
-                element.addEventListener('mousedown', () => {
-                    socket.emit('padPressed', element.dataset.midiTrigger);
+                element.addEventListener('mousedown', (event) => {
+                    if (!padsCurrentlyPressed.has(element.dataset.midiTrigger)) {
+                        // Only trigger if it is not yet pressed
+                        padsCurrentlyPressed.add(element.dataset.midiTrigger);
+                        socket.emit('padPressed', element.dataset.midiTrigger);
+                    }
                 });
-                element.addEventListener('mouseup', () => {
-                    socket.emit('padReleased', element.dataset.midiTrigger);
+                element.addEventListener('mouseup', (event) => {
+                    if (!event.shiftKey) {
+                        if (padsCurrentlyPressed.has(element.dataset.midiTrigger)){
+                            // Only trigger if it was previously pressed
+                            padsCurrentlyPressed.delete(element.dataset.midiTrigger);
+                            socket.emit('padReleased', element.dataset.midiTrigger);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
+                });
+                element.addEventListener('mouseout', (event) => {
+                    if (!event.shiftKey) {
+                        if (padsCurrentlyPressed.has(element.dataset.midiTrigger)) {
+                            // Only trigger if it was still pressed
+                            padsCurrentlyPressed.delete(element.dataset.midiTrigger);
+                            socket.emit('padReleased', element.dataset.midiTrigger);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
                 });
                 return element;
             }
@@ -191,14 +250,118 @@
                 element.dataset.midiTrigger = 'cc' + ccNumber.toString();
                 element.id = element.dataset.midiTrigger;
                 element.title = element.dataset.midiTrigger;
-                element.addEventListener('mousedown', () => {
-                    socket.emit('buttonPressed', element.dataset.midiTrigger);
+                element.addEventListener('mousedown', (event) => {
+                    if (!buttonsCurrentlyPressed.has(element.dataset.midiTrigger)) {
+                        // Only trigger if not yet pressed
+                        buttonsCurrentlyPressed.add(element.dataset.midiTrigger);
+                        socket.emit('buttonPressed', element.dataset.midiTrigger);
+                    }
                 });
-                element.addEventListener('mouseup', () => {
-                    socket.emit('buttonReleased', element.dataset.midiTrigger);
+                element.addEventListener('mouseup', (event) => {
+                    if (!event.shiftKey){
+                        if (buttonsCurrentlyPressed.has(element.dataset.midiTrigger)) {
+                            // Only trigger if it was previously pressed
+                            buttonsCurrentlyPressed.delete(element.dataset.midiTrigger);
+                            socket.emit('buttonReleased', element.dataset.midiTrigger);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
+                    
+                });
+                element.addEventListener('mouseout', (event) => {
+                    if (!event.shiftKey) {
+                        if (buttonsCurrentlyPressed.has(element.dataset.midiTrigger)) {
+                            // Only trigger if it was still pressed
+                            buttonsCurrentlyPressed.delete(element.dataset.midiTrigger);
+                            socket.emit('buttonReleased', element.dataset.midiTrigger);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
                 });
                 return element;
             }
+
+            function createEncoder(ccNumber, nnNumber) {
+                var element = document.createElement('div');
+                //element.innerHTML = "&nbsp;";
+                element.classList.add("encoder");
+                element.dataset.midiTrigger = 'cc' + ccNumber.toString();
+                element.dataset.midiTriggerT = 'nn' + nnNumber.toString();
+                element.id = element.dataset.midiTrigger;
+                element.title = element.dataset.midiTrigger + " " + element.dataset.midiTriggerT; 
+
+                var elementLeft = document.createElement('div');
+                elementLeft.innerHTML = "<";
+                elementLeft.classList.add("encoderButton");
+                elementLeft.addEventListener('mousedown', (event) => {
+                    socket.emit('encdoerRotated', element.dataset.midiTrigger, event.shiftKey ? 117 : 127);
+                });
+
+                var elementTouch = document.createElement('div');
+                elementTouch.innerHTML = "T";
+                elementTouch.classList.add("encoderButton");
+                elementTouch.addEventListener('mousedown', (event) => {
+                    if (!encodersCurrentlyPressed.has(element.dataset.midiTriggerT)) {
+                        // Only trigger if not yet pressed
+                        encodersCurrentlyPressed.add(element.dataset.midiTriggerT);
+                        socket.emit('encdoerTouched', element.dataset.midiTriggerT);
+                    }
+                });
+                elementTouch.addEventListener('mouseup', (event) => {
+                    if (!event.shiftKey) {
+                        if (encodersCurrentlyPressed.has(element.dataset.midiTriggerT)) {
+                            // Only trigger if it was previously pressed
+                            encodersCurrentlyPressed.delete(element.dataset.midiTriggerT);
+                            socket.emit('encdoerReleased', element.dataset.midiTriggerT);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
+
+                });
+                elementTouch.addEventListener('mouseout', (event) => {
+                    if (!event.shiftKey) {
+                        if (encodersCurrentlyPressed.has(element.dataset.midiTriggerT)) {
+                            // Only trigger if it was still pressed
+                            encodersCurrentlyPressed.delete(element.dataset.midiTriggerT);
+                            socket.emit('encdoerReleased', element.dataset.midiTriggerT);
+                        }
+                    } else {
+                        // If shift key is pressed, don't fire "released" element as button/pad
+                        // will be hold until shift button is released
+                    }
+                });
+                var elementRight = document.createElement('div');
+                elementRight.innerHTML = ">";
+                elementRight.classList.add("encoderButton");
+                elementRight.addEventListener('mousedown', (event) => {
+                    socket.emit('encdoerRotated', element.dataset.midiTrigger, event.shiftKey ? 10: 1);
+                });
+
+                element.appendChild(elementLeft);
+                element.appendChild(elementTouch);
+                element.appendChild(elementRight);
+            
+                return element;
+            }
+
+            document.addEventListener("keyup", (event) => {
+                if (event.key === "Shift"){
+                    // Release all buttons/pads hold
+                    buttonsCurrentlyPressed.forEach(function (value) {
+                        socket.emit('buttonReleased', value);
+                    });
+
+                    padsCurrentlyPressed.forEach(function (value) {
+                        socket.emit('padReleased', value);
+                    });
+                }
+            });
 
             function build_ui() {
                 var uiWrapper = document.getElementById('uiWrapper');
@@ -207,7 +370,10 @@
                 var leftSidePart = document.createElement('div');
                 leftSidePart.classList.add('verticalPart');
 
-                // TODO: encoders
+                var row = document.createElement('div');
+                row.appendChild(createEncoder(14, 10));
+                row.appendChild(createEncoder(15, 9));
+                leftSidePart.appendChild(row)
                 
                 var row = document.createElement('div');
                 row.appendChild(createButton(3, "buttonLong", false, "Tap tempo"));
@@ -253,7 +419,12 @@
                 var middlePart = document.createElement('div');
                 middlePart.classList.add('verticalPart');
 
-                // TODO: encoders
+                // Encoders
+                var row = document.createElement('div');
+                for (var i=0; i<8; i++){
+                    row.appendChild(createEncoder(71 + i, i));
+                }
+                middlePart.appendChild(row)
 
                 // Upper buttons
                 var row = document.createElement('div');
@@ -315,7 +486,11 @@
                 var rightSidePart = document.createElement('div');
                 rightSidePart.classList.add('verticalPart');
 
-                // TODO: encoders
+                var row = document.createElement('div');
+                row.appendChild(createDivWithClass('separator'));
+                row.appendChild(createDivWithClass('separator'));
+                row.appendChild(createEncoder(79, 8));
+                rightSidePart.appendChild(row)
 
                 var row = document.createElement('div');
                 row.appendChild(createButton(30, "buttonLong2", false, "Setup"));
@@ -389,6 +564,7 @@
     </head>
     <body>
         <h1>push2-python simulator</h1>
+        <p>Use shift+click to hold buttons/pads pressed. In encoders, use shift+click in the arrow keys to <i>rotate</i> with bigger increments.</p>
         <div id="uiWrapper">
         </div>
     </body>

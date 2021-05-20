@@ -174,7 +174,7 @@ class Push2Display(AbstractPush2Section):
             try:
                 self.configure_usb_device()
             except (Push2USBDeviceNotFound, Push2USBDeviceConfigurationError) as e:
-                logging.error('Could not initialize Push 2 Display: {0}'.format(e))         
+                pass#logging.error('Could not initialize Push 2 Display: {0}'.format(e))         
 
         if self.usb_endpoint is not None:
             try:

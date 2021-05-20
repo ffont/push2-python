@@ -7,7 +7,7 @@ setup(name='push2-python',
       author='Frederic Font',
       author_email='frederic.font@gmail.com',
       license='MIT',
-      install_requires=['numpy', 'pyusb', 'python-rtmidi', 'mido', 'flask', 'flask-socketio', 'evenlet' , 'pillow'],
+      install_requires=['numpy', 'pyusb', 'python-rtmidi', 'mido', 'flask', 'flask-socketio', 'eventlet' , 'pillow'],
       python_requires='>=3',
       packages=find_packages()
       )
