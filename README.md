@@ -338,11 +338,12 @@ push = push2_python.Push2()
 # This function is defined in a rather silly way, could probably be optimized a lot ;)
 def generate_3_color_frame():
     colors = ['{b:05b}{g:06b}{r:05b}'.format(
-                  r=int(32*random.random()), g=int(64*random.random()), b=int(32*random.random())),
-              '{b:05b}{g:06b}{r:05b}'.format(
-                  r=int(32*random.random()), g=int(64*random.random()), b=int(32*random.random())),
-              '{b:05b}{g:06b}{r:05b}'.format(
-                  r=int(32*random.random()), g=int(64*random.random()), b=int(32*random.random()))]
+        r=int(31*random.random()), g=int(63*random.random()), b=int(31*random.random())),
+        '{b:05b}{g:06b}{r:05b}'.format(
+        r=int(31*random.random()), g=int(63*random.random()), b=int(31*random.random())),
+        '{b:05b}{g:06b}{r:05b}'.format(
+        r=int(31*random.random()), g=int(63*random.random()), b=int(31*random.random()))]
+    colors = [int(c, 2) for c in colors]
     line_bytes = []
     for i in range(0, 960):  # 960 pixels per line
         if i <= 960 // 3:
@@ -364,7 +365,7 @@ for i in range(0, 20):
 # Now crate an extra frame which loads an image from a file. Image must be 960x160 pixels.
 img = Image.open('test_img_960x160.png')
 frame = numpy.array(img)
-#frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
+frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
 
 # Now lets configure some action handlers which will display frames in Push2's display in 
 # reaction to pad and button presses

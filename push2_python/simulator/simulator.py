@@ -104,23 +104,7 @@ class SimulatorController(object):
                 frame_b_shifted = numpy.left_shift(frame_b_filtered, 8)  # Shift 8 to the left so G sits at the 16-23 bits
                 rgb_frame = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
                 rgb_frame = numpy.bitwise_or(rgb_frame, int('11111111000000000000000000000000', 2))  # Set alpha channel to "full!" (bits 24-32)
-
-            '''
-            elif input_format == push2_python.constants.FRAME_FORMAT_RGB:
-                
-                r_filter = int('111111110000000000000000', 2)
-                g_filter = int('000000001111111100000000', 2)
-                b_filter = int('000000000000000011111111', 2)
-                frame_r_filtered = numpy.bitwise_and(rgb_frame, r_filter)
-                frame_r_shifted = numpy.left_shift(frame_r_filtered, 16)  # Shift 16 to left so R starts at bit 32
-                frame_g_filtered = numpy.bitwise_and(rgb_frame, g_filter)
-                frame_g_shifted = numpy.left_shift(frame_g_filtered, 8)  # Shift 8 to the left so G start at bit 24
-                frame_b_filtered = numpy.bitwise_and(rgb_frame, b_filter)
-                frame_b_shifted = frame_b_filtered  # No shift, B already starts at 16
-                rgb_frame = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
-                rgb_frame = numpy.bitwise_or(rgb_frame, int('00000000000000000000000011111111', 2))  # Set alpha channel to "full!"
-            '''
-                
+     
             img = Image.frombytes('RGBA', (960, 160), rgb_frame.tobytes())
             buffered = BytesIO()
             img.save(buffered, format="png")
