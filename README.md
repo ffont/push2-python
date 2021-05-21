@@ -223,7 +223,7 @@ With `push2_python.constants.FRAME_FORMAT_RGB565` we need to convert the frame t
 push = push2_python.Push2(run_simulator=True)
 ```
 
-And then, while your app is running, point your browser at `localhost:5000`. Here is a screenshot of the simulator in action:
+And then, while your app is running, point your browser at `localhost:6128`. Here is a screenshot of the simulator in action:
 
 <p align="center">
 <img src="simulator.png" title="push2-python simulator" />
@@ -363,15 +363,8 @@ for i in range(0, 20):
 
 # Now crate an extra frame which loads an image from a file. Image must be 960x160 pixels.
 img = Image.open('test_img_960x160.png')
-img_array = numpy.array(img)
-frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
-
-# Because the pixel format returned by Image.open is not the one required for Push2's display,
-# this frame needs to be prepared before sending it to Push. This conversion takes a bit of 
-# time so we do it offline. Some formats can be converted on the fly by `push2-python` but not 
-# the RGB format retruned by PIL.
-prepared_img_frame = \
-    push.display.prepare_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
+frame = numpy.array(img)
+#frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
 
 # Now lets configure some action handlers which will display frames in Push2's display in 
 # reaction to pad and button presses
@@ -384,7 +377,7 @@ def on_pad_pressed(push, pad_n, pad_ij, velocity):
 @push2_python.on_button_pressed()
 def on_button_pressed(push, button_name):
     # Display the frame with the loaded image
-    push.display.display_prepared_frame(prepared_img_frame)
+    push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB)
 
 # Start infinite loop so the app keeps running
 print('App runnnig...')

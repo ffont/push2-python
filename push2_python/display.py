@@ -28,22 +28,18 @@ def rgb565_to_bgr565(rgb565_frame):
 
 # Non-vectorized function for converting from rgb to bgr565
 def rgb_to_bgr565(rgb_frame):
-    # RGB is defined here as an 2d array with (r, g, b) tuples with values between [0.0, 1.0]
-    # TODO: this is really slow, there are other ways to do this simple (similar to rgb565_to_bgr565)
-    # which will work as well super fast. Need to implement that
-    out_array = numpy.zeros(shape=(rgb_frame.shape[1], rgb_frame.shape[0]), dtype=numpy.uint16)
-    for i in range(0, rgb_frame.shape[0]):
-        for j in range(0, rgb_frame.shape[1]):
-            r = rgb_frame[i][j][0]
-            g = rgb_frame[i][j][1]
-            b = rgb_frame[i][j][2]
-            r = int(round(r * (pow(2, 5) - 1)))
-            g = int(round(g * (pow(2, 6) - 1)))
-            b = int(round(b * (pow(2, 5) - 1)))
-            out_array[j][i] = int(
-                '{b:05b}{g:06b}{r:05b}'.format(r=r, g=g, b=b), 2)
-    return out_array
-
+    rgb_frame *= 255
+    rgb_frame_r = rgb_frame[:, :, 0].astype(numpy.uint16)
+    rgb_frame_g = rgb_frame[:, :, 1].astype(numpy.uint16)
+    rgb_frame_b = rgb_frame[:, :, 2].astype(numpy.uint16)
+    frame_r_filtered = numpy.bitwise_and(rgb_frame_r, int('0000000011111000', 2))
+    frame_r_shifted = numpy.right_shift(frame_r_filtered, 3)
+    frame_g_filtered = numpy.bitwise_and(rgb_frame_g, int('0000000011111100', 2))
+    frame_g_shifted = numpy.left_shift(frame_g_filtered, 3)
+    frame_b_filtered = numpy.bitwise_and(rgb_frame_b, int('0000000011111000', 2))
+    frame_b_shifted = numpy.left_shift(frame_b_filtered, 8)
+    combined = frame_r_shifted + frame_g_shifted + frame_b_shifted  # Combine all channels
+    return combined.transpose()
 
 class Push2Display(AbstractPush2Section):
     """Class to interface with Ableton's Push2 display.
@@ -196,17 +192,11 @@ class Push2Display(AbstractPush2Section):
                 
 
     def display_frame(self, frame, input_format=FRAME_FORMAT_BGR565):
-        prepared_frame = self.prepare_frame(frame, input_format=input_format)
+        prepared_frame = self.prepare_frame(frame.copy(), input_format=input_format)
         self.send_to_display(prepared_frame)
 
         if self.push.simulator_controller is not None:
-            self.push.simulator_controller.prepare_next_frame_for_display(frame, input_format=input_format)
-
-
-    def display_prepared_frame(self, prepared_frame):
-        # NOTE that using this method frames won't be shown in the simulator
-        self.send_to_display(prepared_frame)
-
+            self.push.simulator_controller.prepare_next_frame_for_display(frame.copy(), input_format=input_format)
 
     def display_last_frame(self):
         self.send_to_display(self.last_prepared_frame)
