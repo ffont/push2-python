@@ -47,7 +47,7 @@ class Push2(object):
     simulator_controller = None
 
 
-    def __init__(self, use_user_midi_port=False, run_simulator=False):
+    def __init__(self, use_user_midi_port=False, run_simulator=False, simulator_port=6128):
         """Initializes object to interface with Ableton's Push2.
         This function will set up USB and MIDI connections with the hardware device.
         By default, MIDI connection will use LIVE MIDI port instead of USER MIDI port.
@@ -105,7 +105,7 @@ class Push2(object):
 
         # Initialize simulator (if requested)
         if run_simulator:
-            self.simulator_controller = start_simulator(self)
+            self.simulator_controller = start_simulator(self, port=simulator_port)
 
     def stop_active_sensing_thread(self):
         self.f_stop.set()
@@ -140,13 +140,29 @@ class Push2(object):
             try:
                 self.configure_midi_out()
             except (Push2MIDIeviceNotFound, ) as e:
-                logging.error('Could not initialize Push 2 MIDI out: {0}'.format(e))
+                log_error = False
+                if self.simulator_controller is not None:
+                    if not hasattr(self, 'midi_out_init_error_shown'):
+                        log_error = True
+                        self.midi_out_init_error_shown = True
+                else:
+                    log_error = True
+                if log_error:
+                    logging.error('Could not initialize Push 2 MIDI out: {0}'.format(e))
         
         if not skip_midi_in:
             try:
                 self.configure_midi_in()
             except (Push2MIDIeviceNotFound, ) as e:
-                logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))
+                log_error = False
+                if self.simulator_controller is not None:
+                    if not hasattr(self, 'midi_in_init_error_shown'):
+                        log_error = True
+                        self.midi_in_init_error_shown = True
+                else:
+                    log_error = True
+                if log_error:
+                    logging.error('Could not initialize Push 2 MIDI in: {0}'.format(e))
 
 
     def configure_midi_in(self):
@@ -325,6 +341,10 @@ class Push2(object):
 
         # Update self.color_palette with given color names (first one for rgb, second one for bw)
         self.color_palette[color_idx] = color_names
+
+        # Update color in simulator (if it is being run...)
+        if self.simulator_controller is not None:
+            self.simulator_controller.update_color_palette_entry(color_idx, (r, g, b), (w, w, w))
 
 
     def update_rgb_color_palette_entry(self, color_name, rgb):

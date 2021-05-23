@@ -2,21 +2,23 @@ import push2_python
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from threading import Thread
+import threading
 import mido
 import base64
 from PIL import Image
 from io import BytesIO
 import time
 import numpy
+import queue 
+import logging
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'uP3jUqqye3'
-sim_app = SocketIO(app) # logger=True, engineio_logger=True
+sim_app = SocketIO(app)
+
+app_thread_id = None
 
 push_object = None
 client_connected = False
-latest_prepared_base64_image_to_send = None
-latest_prepared_image_sent = False
 
 default_color_palette = {
     0: [(0, 0, 0), (0 ,0 ,0)],
@@ -48,9 +50,31 @@ class SimulatorController(object):
     next_frame = None
     color_palette = default_color_palette
     last_time_frame_prepared = 0
+    ws_message_queue = queue.Queue()
 
-    def set_color_palette(self, new_color_palette):
-        self.color_palette = new_color_palette
+    def emit_ws_message(self, name, data):
+        if threading.get_ident() != app_thread_id:
+            # The flask-socketio default configuration for web sockets does not support emitting to the browser from different
+            # threads. It looks like this should be possible using some external queue based on redis or the like, but to avoid
+            # further complicating the setup and requirements, if for some reason we're trying to emit tot he browser from a 
+            # different thread than the thread running the Flask server, we add the messages to a queue. That queue is being 
+            # continuously pulled (every 100ms) from the browser (see index.html) and then messages are sent. This means that
+            # the timing of the messages won't be accurate, but this seems like a reaosnable trade-off considering the nature
+            # and purpose of the simulator.
+            self.ws_message_queue.put((name, data))
+        else:
+            emit(name, data)
+
+    def emit_messages_from_ws_queue(self):
+        while not self.ws_message_queue.empty():
+            name, data = self.ws_message_queue.get()
+            emit(name, data)
+
+    def clear_color_palette(self):
+        self.color_palette = {}
+
+    def update_color_palette_entry(self, color_index, color_rgb, color_bw):
+        self.color_palette[color_index] = [color_rgb, color_bw]
 
     def set_element_color(self, midiTrigger, color_idx, animation_idx):
         rgb, bw_rgb = self.color_palette.get(color_idx, [(255, 255, 255), (255, 255, 255)])
@@ -59,19 +83,16 @@ class SimulatorController(object):
         if bw_rgb is None:
             bw_rgb = (255, 255, 255)
         if client_connected:
-            try:
-                emit('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb, 'blink': animation_idx != 0})
-            except RuntimeError:
-                pass
+            self.emit_ws_message('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb, 'blink': animation_idx != 0})            
 
     def prepare_next_frame_for_display(self, frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565):
-        global latest_prepared_base64_image_to_send, latest_prepared_image_sent
 
-        # 'frame' expects a "frame" as in display.display_frame method
-        if time.time() - self.last_time_frame_prepared > 1.0/5.0:  # Limit fps to save recources
+        if time.time() - self.last_time_frame_prepared > 1.0/5.0:  # Limit to 5 fps to save recources
             self.last_time_frame_prepared = time.time()
             
+            # 'frame' should be an array as in display.display_frame method input
             # We need to convert the frame to RGBA format first (so Pillow can read it later)
+            
             if input_format == push2_python.constants.FRAME_FORMAT_RGB:
                 frame = push2_python.display.rgb_to_bgr565(frame)
 
@@ -109,35 +130,31 @@ class SimulatorController(object):
             buffered = BytesIO()
             img.save(buffered, format="png")
             base64Image = 'data:image/png;base64, ' + str(base64.b64encode(buffered.getvalue()))[2:-1]
-            latest_prepared_base64_image_to_send = base64Image
-            latest_prepared_image_sent = False
+            self.emit_ws_message('setDisplay', {'base64Image': base64Image})
                 
 
 @sim_app.on('connect')
 def test_connect():
     global client_connected
     client_connected = True
-    print('Client connected')
     push_object.trigger_action(push2_python.constants.ACTION_MIDI_CONNECTED)
     push_object.trigger_action(push2_python.constants.ACTION_DISPLAY_CONNECTED)
+    logging.info('Simulator client connected')
 
 
 @sim_app.on('disconnect')
 def test_disconnect():
     global client_connected
     client_connected = False
-    print('Client disconnected')
     push_object.trigger_action(push2_python.constants.ACTION_MIDI_DISCONNECTED)
     push_object.trigger_action(push2_python.constants.ACTION_DISPLAY_DISCONNECTED)
+    logging.info('Simulator client disconnected')
 
 
-@sim_app.on('getNewDisplayImage')
-def get_new_display_image():
-    global latest_prepared_image_sent
-    if not latest_prepared_image_sent:
-        emit('setDisplay', {'base64Image': latest_prepared_base64_image_to_send})
-        latest_prepared_image_sent = True
-    
+@sim_app.on('getPendingMessages')
+def get_ws_messages_from_queue():
+    push_object.simulator_controller.emit_messages_from_ws_queue()
+
 
 @sim_app.on('padPressed')
 def pad_pressed(midiTrigger):
@@ -186,13 +203,16 @@ def index():
     return render_template('index.html')
 
 
-def run_simulator_in_thread():
-    sim_app.run(app, port=6128)
+def run_simulator_in_thread(port):
+    global app_thread_id
+    app_thread_id = threading.get_ident()
+    logging.error('Running simulator at http://localhost:{}'.format(port))
+    sim_app.run(app, port=port)
 
 
-def start_simulator(_push_object):
+def start_simulator(_push_object, port):
     global push_object
     push_object = _push_object
-    thread = Thread(target = run_simulator_in_thread)
+    thread = Thread(target=run_simulator_in_thread, args=(port,))
     thread.start()
     return SimulatorController()

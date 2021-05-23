@@ -229,19 +229,7 @@ And then, while your app is running, point your browser at `localhost:6128`. Her
 <img src="simulator.png" title="push2-python simulator" />
 </p>
 
-In order to synchronize color palettes between the simulator and push, you need to call the `set_color_palette` of the simulator object (`push.simulator_controller.set_color_palette`) and pass a color palette dictionary with keys being color index (0-127) and each item is a list of two 3-element tuples with the RGB values (0-255) for the corresponding RGB color and black and white to that index. It should look like the following:
-
-```
-{
-    0: [(255, 0, 0), (0 ,0 ,0)],
-    1: [(0, 255, 0), (125 ,125, 125)],
-    2: [(0, 0, 255), (255, 255, 255)],
-    3: [(255, 0, 255), None],
-    ...
-}
-```
-
-In this example the first color index will be red for RGB buttons and black for black and white button. Note that the second "column" should only ocntain grayscale RGB values. `None` values will be converted to "white".
+You can customize the port that the simulator uses by passing `simulator_port` argument when initializing `push2_python.Push2`. Note that the **simulator only implements basic functionality** of Push2, and has some important limitations. For instance, the FPS of the display is limited. Also pressing/releasing buttons or pads very fast may result in some cases in "lost" messages. Touchstrip support is not implemented nor pressure sentisitivy in the pads. You can however use the simulator to trigger buttons and pads, rotate and touch/release encoders, show the display and set pad/button colors. Color palettes are updated in the simulator in the same way as these are updated in Push, therefore if using configuring custom color palettes [as described above](#set-pad-and-button-colors), you should see the correct colors in the simulator. Note that the initial color palette (if no custom colors are provided) is very limited and we strongly recommend to always use a custom color palette.
 
 
 ## Code examples
@@ -365,7 +353,7 @@ for i in range(0, 20):
 # Now crate an extra frame which loads an image from a file. Image must be 960x160 pixels.
 img = Image.open('test_img_960x160.png')
 frame = numpy.array(img)
-frame = img_array/255  # Convert rgb values to [0.0, 1.0] floats
+frame = frame/255  # Convert rgb values to [0.0, 1.0] floats
 
 # Now lets configure some action handlers which will display frames in Push2's display in 
 # reaction to pad and button presses

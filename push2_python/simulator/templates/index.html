@@ -12,6 +12,10 @@
                 user-select: none;
             }
 
+            h1 {
+                color: white;
+            }
+
             .button {
                 width: 44px;
                 height: 44px;
@@ -429,7 +433,7 @@
                 // Upper buttons
                 var row = document.createElement('div');
                 for (var i=0; i<8; i++){
-                    row.appendChild(createButton(102 + i , "buttonLong", true, "____"));
+                    row.appendChild(createButton(102 + i , "buttonLong", true, "__________"));
                 }
                 middlePart.appendChild(row);
                 middlePart.appendChild(createDivWithClass('separator'));
@@ -458,7 +462,7 @@
                 var row = document.createElement('div');
                 for (var i=0; i<9; i++){
                     if (i<8){
-                        row.appendChild(createButton(20 + i , "buttonLong", true, "____"));
+                        row.appendChild(createButton(20 + i , "buttonLong", true, "__________"));
                     } else {
                         row.appendChild(createDivWithClass('separator'));
                         row.appendChild(createButton(28 , "buttonLong2", false, "Master"));
@@ -556,8 +560,12 @@
             document.addEventListener("DOMContentLoaded", () => {
                 build_ui();
                 setInterval(() => {
-                    socket.emit('getNewDisplayImage');
-                }, 50);
+                    // Because of the way in which the simulator server is set up, there might be problems when emiting WS messages from multiple
+                    // threads. To workaround this issues, there are some messages which are not sent directly to the browser but stored in a queue
+                    // in the server which is periodically consumed from the browser every 100ms using this setInterval function.
+                    socket.emit('getPendingMessages');
+                }, 100);
+
             });
 
         </script>
