@@ -48,9 +48,31 @@ def make_midi_message_from_midi_trigger(midi_trigger, releasing=False, velocity=
 class SimulatorController(object):
 
     next_frame = None
-    color_palette = default_color_palette
+    black_frame = None
     last_time_frame_prepared = 0
+    max_seconds_display_inactive = 2 
+    color_palette = default_color_palette
     ws_message_queue = queue.Queue()
+
+    def __init__(self, *args, **kwargs):
+        # Generate black frame to be used if display is not updated
+        colors = ['{b:05b}{g:06b}{r:05b}'.format(r=0, g=0, b=0),
+                  '{b:05b}{g:06b}{r:05b}'.format(r=0, g=0, b=0),
+                  '{b:05b}{g:06b}{r:05b}'.format(r=0, g=0, b=0)]
+        colors = [int(c, 2) for c in colors]
+        line_bytes = []
+        for i in range(0, 960):  # 960 pixels per line
+            if i <= 960 // 3:
+                line_bytes.append(colors[0])
+            elif 960 // 3 < i <= 2 * 960 // 3:
+                line_bytes.append(colors[1])
+            else:
+                line_bytes.append(colors[2])
+        frame = []
+        for i in range(0, 160):  # 160 lines
+            frame.append(line_bytes)
+        self.black_frame = numpy.array(frame, dtype=numpy.uint16).transpose()
+
 
     def emit_ws_message(self, name, data):
         if threading.get_ident() != app_thread_id:
@@ -70,6 +92,9 @@ class SimulatorController(object):
             name, data = self.ws_message_queue.get()
             emit(name, data)
 
+        if time.time() - self.last_time_frame_prepared > self.max_seconds_display_inactive:
+            self.prepare_and_display_in_simulator(self.black_frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565, force=True)
+
     def clear_color_palette(self):
         self.color_palette = {}
 
@@ -85,9 +110,9 @@ class SimulatorController(object):
         if client_connected:
             self.emit_ws_message('setElementColor', {'midiTrigger':midiTrigger, 'rgb': rgb, 'bwRgb': bw_rgb, 'blink': animation_idx != 0})            
 
-    def prepare_next_frame_for_display(self, frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565):
+    def prepare_and_display_in_simulator(self, frame, input_format=push2_python.constants.FRAME_FORMAT_BGR565, force=False):
 
-        if time.time() - self.last_time_frame_prepared > 1.0/5.0:  # Limit to 5 fps to save recources
+        if time.time() - self.last_time_frame_prepared > 1.0/5.0 or force:  # Limit to 5 fps to save recources
             self.last_time_frame_prepared = time.time()
             
             # 'frame' should be an array as in display.display_frame method input

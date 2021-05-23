@@ -204,7 +204,7 @@ class Push2Display(AbstractPush2Section):
         self.send_to_display(prepared_frame)
 
         if self.push.simulator_controller is not None:
-            self.push.simulator_controller.prepare_next_frame_for_display(frame.copy(), input_format=input_format)
+            self.push.simulator_controller.prepare_and_display_in_simulator(frame.copy(), input_format=input_format)
 
     def display_last_frame(self):
         self.send_to_display(self.last_prepared_frame)
