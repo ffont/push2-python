@@ -47,7 +47,7 @@ class Push2(object):
     simulator_controller = None
 
 
-    def __init__(self, use_user_midi_port=False, run_simulator=False, simulator_port=6128):
+    def __init__(self, use_user_midi_port=False, run_simulator=False, simulator_port=6128, simulator_use_virtual_midi_out=False):
         """Initializes object to interface with Ableton's Push2.
         This function will set up USB and MIDI connections with the hardware device.
         By default, MIDI connection will use LIVE MIDI port instead of USER MIDI port.
@@ -105,10 +105,12 @@ class Push2(object):
 
         # Initialize simulator (if requested)
         if run_simulator:
-            self.simulator_controller = start_simulator(self, port=simulator_port)
+            self.simulator_controller = start_simulator(self, port=simulator_port, use_virtual_midi_out=simulator_use_virtual_midi_out)
+
 
     def stop_active_sensing_thread(self):
         self.f_stop.set()
+
 
     def set_push2_reconnect_call_interval(self, new_interval):
         self.function_call_interval_limit_overwrite = new_interval

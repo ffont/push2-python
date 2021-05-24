@@ -11,6 +11,7 @@ import time
 import numpy
 import queue 
 import logging
+import mido
 
 app = Flask(__name__)
 sim_app = SocketIO(app)
@@ -19,6 +20,9 @@ app_thread_id = None
 
 push_object = None
 client_connected = False
+
+midi_out = None
+
 
 default_color_palette = {
     0: [(0, 0, 0), (0 ,0 ,0)],
@@ -39,9 +43,9 @@ default_color_palette = {
 
 def make_midi_message_from_midi_trigger(midi_trigger, releasing=False, velocity=127, value=127):
     if midi_trigger.startswith('nn'):
-        return mido.Message('note_on' if not releasing else 'note_off', note=int(midi_trigger.replace('nn', '')), velocity=velocity)
-    if midi_trigger.startswith('cc'):
-        return mido.Message('control_change', control=int(midi_trigger.replace('cc', '')), value=value if not releasing else 0)
+        return mido.Message('note_on' if not releasing else 'note_off', note=int(midi_trigger.replace('nn', '')), velocity=velocity, channel=0)
+    elif midi_trigger.startswith('cc'):
+        return mido.Message('control_change', control=int(midi_trigger.replace('cc', '')), value=value if not releasing else 0, channel=0)
     return None
 
 
@@ -54,7 +58,8 @@ class SimulatorController(object):
     color_palette = default_color_palette
     ws_message_queue = queue.Queue()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
+
         # Generate black frame to be used if display is not updated
         colors = ['{b:05b}{g:06b}{r:05b}'.format(r=0, g=0, b=0),
                   '{b:05b}{g:06b}{r:05b}'.format(r=0, g=0, b=0),
@@ -184,42 +189,56 @@ def get_ws_messages_from_queue():
 @sim_app.on('padPressed')
 def pad_pressed(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.pads.on_midi_message(msg)
 
 
 @sim_app.on('padReleased')
 def pad_released(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger, releasing=True)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.pads.on_midi_message(msg)
 
 
 @sim_app.on('buttonPressed')
 def button_pressed(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.buttons.on_midi_message(msg)
 
 
 @sim_app.on('buttonReleased')
 def button_released(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger, releasing=True)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.buttons.on_midi_message(msg)
 
 
 @sim_app.on('encdoerTouched')
 def encoder_pressed(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger, velocity=127)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.encoders.on_midi_message(msg)
 
 
 @sim_app.on('encdoerReleased')
 def encoder_released(midiTrigger):
     msg = make_midi_message_from_midi_trigger(midiTrigger, velocity=0)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.encoders.on_midi_message(msg)
 
 
 @sim_app.on('encdoerRotated')
 def encoder_rotated(midiTrigger, value):
     msg = make_midi_message_from_midi_trigger(midiTrigger, value=value)
+    if midi_out is not None:
+        midi_out.send(msg)
     push_object.encoders.on_midi_message(msg)
 
 
@@ -235,9 +254,13 @@ def run_simulator_in_thread(port):
     sim_app.run(app, port=port)
 
 
-def start_simulator(_push_object, port):
-    global push_object
+def start_simulator(_push_object, port, use_virtual_midi_out):
+    global push_object, midi_out
     push_object = _push_object
-    thread = Thread(target=run_simulator_in_thread, args=(port,))
+    if use_virtual_midi_out:
+        name = 'Push2Simulator'
+        logging.info('Sending Push2 simulated messages to "{}" virtual midi output'.format(name))
+        midi_out = mido.open_output(name, virtual=True)
+    thread = Thread(target=run_simulator_in_thread, args=(port, ))
     thread.start()
     return SimulatorController()
