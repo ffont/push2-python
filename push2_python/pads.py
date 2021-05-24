@@ -140,13 +140,13 @@ class Push2Pads(AbstractPush2Section):
                 assert len(animation_matrix[i]) == 8, 'Wrong number of animation values in line ({0})'.format(len(animation_matrix[i]))
             for j, color in enumerate(line):
                 animation = ANIMATION_DEFAULT
+                animation_end_color = 'black'
                 if animation_matrix is not None:
                     element = animation_matrix[i][j]
                     if type(element) == tuple:
                         animation, animation_end_color = animation_matrix[i][j]
                     else:
                         animation = animation_matrix[i][j]
-                        animation_end_color = 'black'
                 self.set_pad_color((i, j), color=color, animation=animation, animation_end_color=animation_end_color)
 
     def set_all_pads_to_color(self, color='white', animation=ANIMATION_DEFAULT, animation_end_color='black'):
