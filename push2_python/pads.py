@@ -1,7 +1,7 @@
 import mido
 from .constants import ANIMATION_DEFAULT, MIDO_NOTEON, MIDO_NOTEOFF, \
     MIDO_POLYAT, MIDO_AFTERTOUCH, ACTION_PAD_PRESSED, ACTION_PAD_RELEASED, ACTION_PAD_AFTERTOUCH, PUSH2_SYSEX_PREFACE_BYTES, \
-    PUSH2_SYSEX_END_BYTES
+    PUSH2_SYSEX_END_BYTES, ANIMATION_STATIC
 from .classes import AbstractPush2Section
 
 
@@ -96,13 +96,13 @@ class Push2Pads(AbstractPush2Section):
     def pad_n_to_pad_ij(self, n):
         return pad_n_to_pad_ij(n)
 
-    def set_pad_color(self, pad_ij, color='white', animation=ANIMATION_DEFAULT, optimize_num_messages=True):
+    def set_pad_color(self, pad_ij, color='white', animation=ANIMATION_DEFAULT, optimize_num_messages=True, animation_end_color='black'):
         """Sets the color of the pad at the (i,j) coordinate.
         'color' must be a valid RGB color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
-        'animation' must be a valid animation name from those defined in push2_python.contants.ANIMATION_*. Note that to configure an animation, both the 'start' and 'end'
-        colors of the animation need to be defined. The 'start' color is defined by setting a color with 'push2_python.contants.ANIMATION_STATIC' (the default).
-        The second color is set setting a color with whatever ANIMATION_* type is desired.
-
+        'animation' must be a valid animation name from those defined in push2_python.contants.ANIMATION_*. Note that to configure an animation, both 
+        the 'start' and 'end' colors of the animation need to be defined. The 'start' color is defined by 'color' parameter. The 'end' color is defined 
+        by the color specified in 'animation_end_color', which must be a valid RGB color name present in the color palette.
+        
         This funtion will keep track of the latest color/animation values set for each specific pad. If 'optimize_num_messages' is 
         set to True, set_pad_color will only actually send the MIDI message to push if either the color or animation that should 
         be set differ from those stored in the state.
@@ -113,13 +113,17 @@ class Push2Pads(AbstractPush2Section):
         if optimize_num_messages and pad in self.current_pads_state and self.current_pads_state[pad]['color'] == color and self.current_pads_state[pad]['animation'] == animation:
             # If pad's recorded state already has the specified color and animation, return method before sending the MIDI message
             return
+        if animation != ANIMATION_STATIC:
+            # If animation is not static, we first set the pad to black color with static animation so then, when setting
+            # the desired color with the corresponding animation it lights as expected.
+            msg = mido.Message(MIDO_NOTEON, note=pad, velocity=self.push.get_rgb_color(animation_end_color), channel=ANIMATION_STATIC)
+            self.push.send_midi_to_push(msg)
         msg = mido.Message(MIDO_NOTEON, note=pad, velocity=color, channel=animation)
         self.push.send_midi_to_push(msg)
         self.current_pads_state[pad] = {'color': color, 'animation': animation}
 
         if self.push.simulator_controller is not None:
             self.push.simulator_controller.set_element_color('nn' + str(pad), color, animation)
-
 
     def set_pads_color(self, color_matrix, animation_matrix=None):
         """Sets the color and animations of all pads according to the given matrices.
@@ -137,10 +141,10 @@ class Push2Pads(AbstractPush2Section):
             for j, color in enumerate(line):
                 animation = ANIMATION_DEFAULT
                 if animation_matrix is not None:
-                    animation = animation_matrix[i][j]
-                self.set_pad_color((i, j), color=color, animation=animation)
+                    animation, animation_end_color = animation_matrix[i][j]
+                self.set_pad_color((i, j), color=color, animation=animation, animation_end_color=animation_end_color)
 
-    def set_all_pads_to_color(self, color='white', animation=ANIMATION_DEFAULT):
+    def set_all_pads_to_color(self, color='white', animation=ANIMATION_DEFAULT, animation_end_color='black'):
         """Set all pads to the given color/animation.
         'color' must be a valid RGB color name present in the color palette. See push2_python.constants.DEFAULT_COLOR_PALETTE for default color names.
         'animation' must be a valid animation name from those defined in push2_python.contants.ANIMATION_*. Note that to configure an animation, both the 'start' and 'end'
@@ -148,23 +152,23 @@ class Push2Pads(AbstractPush2Section):
         The second color is set setting a color with whatever ANIMATION_* type is desired.
         """
         color_matrix = [[color for _ in range(0, 8)] for _ in range(0, 8)]
-        animation_matrix = [[animation for _ in range(0, 8)] for _ in range(0, 8)]
+        animation_matrix = [[(animation, animation_end_color) for _ in range(0, 8)] for _ in range(0, 8)]
         self.set_pads_color(color_matrix, animation_matrix)
 
     def set_all_pads_to_black(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('black', animation=animation)
+        self.set_all_pads_to_color('black', animation=animation, animation_end_color='black')
     
     def set_all_pads_to_white(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('white', animation=animation)
+        self.set_all_pads_to_color('white', animation=animation, animation_end_color='black')
 
     def set_all_pads_to_red(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('red', animation=animation)
+        self.set_all_pads_to_color('red', animation=animation, animation_end_color='black')
 
     def set_all_pads_to_green(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('green', animation=animation)
+        self.set_all_pads_to_color('green', animation=animation, animation_end_color='black')
 
     def set_all_pads_to_blue(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('blue', animation=animation)
+        self.set_all_pads_to_color('blue', animation=animation, animation_end_color='black')
 
     def on_midi_message(self, message):
         if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, MIDO_AFTERTOUCH]:

@@ -163,12 +163,10 @@ For a list of avilable RGB colors check the `DEFAULT_COLOR_PALETTE` dictionary i
 
 ### Set pad and button animations
 
-Animations (e.g. led blinking) can be configured similarly to colors. To configiure an animation you need to define the *starting color* by sending a "set color" message with an animation code corresponding to "static", and then set the *second color* by sending another "set color" message with an animation code corresponding to the desired animation. For example, to condfigure the
-play button with a pulsing animation from white to green:
+Animations (e.g. led blinking) can be configured similarly to colors. To configiure an animation you need to define the *starting color* and the *ending color* plus the type of animation. For example, to configure the play button with a pulsing animation from green to white:
 
 ```python
-push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'white')
-push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green', animation=push2_python.constants.ANIMATION_PULSING_QUARTER)
+push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, 'green', animation=push2_python.constants.ANIMATION_PULSING_QUARTER, animation_end_color='white')
 ```
 
 By default, animations are synced to a clock of 120bpm. It is possible to change that tempo by sending MIDI clock messages to the Push2 device, but `push2-python` currently does not support that. Should be easy to implement though by sending MIDI clock messages using the `push.send_midi_to_push(msg)` method.
