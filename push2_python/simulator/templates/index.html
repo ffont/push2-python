@@ -360,10 +360,12 @@
                     buttonsCurrentlyPressed.forEach(function (value) {
                         socket.emit('buttonReleased', value);
                     });
+                    buttonsCurrentlyPressed.clear();
 
                     padsCurrentlyPressed.forEach(function (value) {
                         socket.emit('padReleased', value);
                     });
+                    padsCurrentlyPressed.clear();
                 }
             });
 
