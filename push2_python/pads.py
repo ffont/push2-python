@@ -141,7 +141,12 @@ class Push2Pads(AbstractPush2Section):
             for j, color in enumerate(line):
                 animation = ANIMATION_DEFAULT
                 if animation_matrix is not None:
-                    animation, animation_end_color = animation_matrix[i][j]
+                    element = animation_matrix[i][j]
+                    if type(element) == tuple:
+                        animation, animation_end_color = animation_matrix[i][j]
+                    else:
+                        animation = animation_matrix[i][j]
+                        animation_end_color = 'black'
                 self.set_pad_color((i, j), color=color, animation=animation, animation_end_color=animation_end_color)
 
     def set_all_pads_to_color(self, color='white', animation=ANIMATION_DEFAULT, animation_end_color='black'):
@@ -155,20 +160,20 @@ class Push2Pads(AbstractPush2Section):
         animation_matrix = [[(animation, animation_end_color) for _ in range(0, 8)] for _ in range(0, 8)]
         self.set_pads_color(color_matrix, animation_matrix)
 
-    def set_all_pads_to_black(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('black', animation=animation, animation_end_color='black')
+    def set_all_pads_to_black(self, animation=ANIMATION_DEFAULT, animation_end_color='black'):
+        self.set_all_pads_to_color('black', animation=animation, animation_end_color=animation_end_color)
     
-    def set_all_pads_to_white(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('white', animation=animation, animation_end_color='black')
+    def set_all_pads_to_white(self, animation=ANIMATION_DEFAULT, animation_end_color='black'):
+        self.set_all_pads_to_color('white', animation=animation, animation_end_color=animation_end_color)
 
-    def set_all_pads_to_red(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('red', animation=animation, animation_end_color='black')
+    def set_all_pads_to_red(self, animation=ANIMATION_DEFAULT, animation_end_color='black'):
+        self.set_all_pads_to_color('red', animation=animation, animation_end_color=animation_end_color)
 
-    def set_all_pads_to_green(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('green', animation=animation, animation_end_color='black')
+    def set_all_pads_to_green(self, animation=ANIMATION_DEFAULT, animation_end_color='black'):
+        self.set_all_pads_to_color('green', animation=animation, animation_end_color=animation_end_color)
 
-    def set_all_pads_to_blue(self, animation=ANIMATION_DEFAULT):
-        self.set_all_pads_to_color('blue', animation=animation, animation_end_color='black')
+    def set_all_pads_to_blue(self, animation=ANIMATION_DEFAULT, animation_end_color='black'):
+        self.set_all_pads_to_color('blue', animation=animation, animation_end_color=animation_end_color)
 
     def on_midi_message(self, message):
         if message.type in [MIDO_NOTEON, MIDO_NOTEOFF, MIDO_POLYAT, MIDO_AFTERTOUCH]:
