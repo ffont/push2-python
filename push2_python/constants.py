@@ -23,10 +23,10 @@ def is_push_midi_in_port_name(port_name, use_user_port=False):
         else:
             return 'Ableton Push' in port_name and port_name.endswith(':1')  # 'Ableton Push 2 nn:1', with nn being a variable number
     elif platform.system() == "Windows":
-        if not use_user_port:
+        if not use_user_port: # this uses the Ableton Live Midi Port
+            return 'Ableton Push 2' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
+        else:  # user port
             return 'MIDIIN2 (Ableton Push 2)' in port_name  # 'MIDIIN2 (Ableton Push 2) nn', with nn being a variable number
-        else:
-            return 'Ableton Push' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
     else: #macOS
         if not use_user_port:
             return 'Ableton Push 2 Live Port' in port_name
@@ -46,10 +46,10 @@ def is_push_midi_out_port_name(port_name, use_user_port=False):
         else:
             return 'Ableton Push' in port_name and port_name.endswith(':1')  # 'Ableton Push 2 nn:1', with nn being a variable number
     elif platform.system() == "Windows":
-        if not use_user_port:
+        if not use_user_port:  # ableton live midi port
+            return 'Ableton Push 2' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
+        else:  # user port
             return 'MIDIOUT2 (Ableton Push 2)' in port_name  # 'MIDIIN2 (Ableton Push 2) nn', with nn being a variable number
-        else:
-            return 'Ableton Push' in port_name  # 'Ableton Push 2 nn', with nn being a variable number
     else: #macOS
         if not use_user_port:
             return 'Ableton Push 2 Live Port' == port_name
