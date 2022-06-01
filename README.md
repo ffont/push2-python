@@ -93,7 +93,7 @@ the left-most encoder is rotated in this way:
 
 ```python
 @push2_python.on_encoder_rotated(push2_python.constants.ENCODER_TEMPO_ENCODER)
-def on_left_encoder_rotated(push, incrememnt):
+def on_left_encoder_rotated(push, increment):
     print('Left-most encoder rotated with increment', increment)
 ```
 
